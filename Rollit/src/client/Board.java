@@ -213,7 +213,7 @@ public class Board {
     }
     
     /**
-     * Returs the whole field array.
+     * Returns the whole field array.
      */
     public Ball[][] getFields() {
 		return fields;

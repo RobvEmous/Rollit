@@ -4,7 +4,7 @@ import java.awt.Point;
 import java.util.Scanner;
 
 /**
- * Class for maintaining a human player in Tic Tac Toe. Module 2 lab assignment
+ * Class for maintaining a human player in the Rollit game.
  * 
  * @author Rob van Emous
  * @version v0.8
@@ -37,7 +37,7 @@ public class HumanPlayer extends GamePlayer {
         this.useUI = false;
         scanner = new Scanner(System.in);
     }
-
+    
     /**
      * Asks the user to input the field where to place the next mark. This is
      * done using the standard input/output.
@@ -47,6 +47,7 @@ public class HumanPlayer extends GamePlayer {
      */
     public Point determineMove(Board board) {
     	if (useUI) {
+    		
     		return null;
     	} else {
     		Point choice = null;

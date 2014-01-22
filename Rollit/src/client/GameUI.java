@@ -3,6 +3,7 @@ package client;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -18,15 +19,6 @@ import javax.swing.JPanel;
  */
 public class GameUI extends JFrame implements Observer {
 	private static final long serialVersionUID = 5844574958336659575L;
-
-	/**
-	 * The amount of buttons that the board is wide.
-	 */
-	public static final int FIELD_WIDTH = Board.X_MAX;
-	/**
-	 * The amount of buttons that the board is high.
-	 */
-	public static final int FIELD_HEIGHT = Board.Y_MAX;
 	
 	private ResizeListener resizeListener;
 	private FieldListener fieldListener;
@@ -51,18 +43,20 @@ public class GameUI extends JFrame implements Observer {
 	}
 	
 	/**
-	 * This method initializes the entire GUI it creates all panels and buttons and than adds
-	 * them to the frame that is this GUI
+	 * This method initializes the entire GUI.</br>
+	 * It makes a call to the methods <code>initListeners</code> and <code> createField</code>.
+	 * Furthermore it creates two panels and adds them to the frame that is this UI, one for
+	 * the field and its buttons and one for the menu on the side .
 	 */
 	private void initialize() {
 		initListeners();
 		
 		optionsPanel = new JPanel();
-		optionsPanel.setSize((int) (getSize().getWidth() / 3), (FIELD_HEIGHT * buttonSize));
+		optionsPanel.setSize((int) (getSize().getWidth() / 3), (Board.Y_MAX * buttonSize));
 		
 		GridLayout fieldLayout = new GridLayout(8, 8);
 		fieldPanel = new JPanel(fieldLayout);
-		fieldPanel.setSize((FIELD_WIDTH * buttonSize), (FIELD_HEIGHT * buttonSize));
+		fieldPanel.setSize((Board.X_MAX * buttonSize), (Board.Y_MAX * buttonSize));
 		
 		createField();
 		
@@ -75,13 +69,14 @@ public class GameUI extends JFrame implements Observer {
 
 	/**
 	 * This method initializes and fills the array used for storing the buttons that together
-	 * form the board.
-	 * It also sets these buttons to some default properties.
+	 * form the board.</br>
+	 * It also sets some default properties of these buttons like background color, icon and
+	 * size.
 	 */
 	private void createField() {
-		field = new JButton[FIELD_HEIGHT][FIELD_WIDTH];
-		for (int y = 0; y < FIELD_HEIGHT; y++) {
-			for (int x = 0; x <FIELD_WIDTH; x++) {
+		field = new JButton[Board.Y_MAX][Board.X_MAX];
+		for (int y = 0; y < Board.Y_MAX; y++) {
+			for (int x = 0; x <Board.X_MAX; x++) {
 				field[y][x] = new JButton();
 				field[y][x].setBackground(backgroundColor);
 				field[y][x].setVisible(true);
@@ -102,59 +97,27 @@ public class GameUI extends JFrame implements Observer {
 		fieldListener = new FieldListener(this);
 	}	
 
-	@Override
-	public void update(Observable o, Object arg) {
-		Ball[][] boardFields = (Ball[][]) arg;
-		for (int y = 0; y < Board.Y_MAX; y++) {
-			for (int x = 0; x < Board.X_MAX; x++) {
-				Ball ball = boardFields[x][y];
-				switch (ball) {
-				case RED:
-					field[y][x].setDisabledIcon(ballRedIcon);
-					field[y][x].setEnabled(false);
-					break;
-				case BLUE:
-					field[y][x].setDisabledIcon(ballBlueIcon);
-					field[y][x].setEnabled(false);
-					break;
-				case YELLOW:
-					field[y][x].setDisabledIcon(ballYellowIcon);
-					field[y][x].setEnabled(false);
-					break;
-				case GREEN:
-					field[y][x].setDisabledIcon(ballGreenIcon);
-					field[y][x].setEnabled(false);
-					break;
-				case HINT:
-					field[y][x].setIcon(ballHintIcon);
-				case EMPTY:
-					field[y][x].setIcon(ballNoneIcon);
-				default:
-					break;
-				}
-				
-			}
-		}
-	}
+	
 	
 	/**
+	 * The method that makes sure the contents of the frame get resized when the frame is.
 	 * When this method is called it gets the size of the frame and then sets the size of
 	 * the panels and buttons to match the right proportions. After this is done it also 
-	 * validates the frame to make sure the GUI is updated to its new size.
+	 * validates the frame to make sure the UI is updated to its new size.
 	 */	
 	protected void rescale() {
 		Dimension dim = getSize();
 		double width = ((dim.getWidth()) / 3) * 2;
 		double height = dim.getHeight() - 36;
 		if (width >= height) {
-			buttonSize = (int) (height / FIELD_HEIGHT);
+			buttonSize = (int) (height / Board.Y_MAX);
 		} else {
-			buttonSize = (int) (width / FIELD_WIDTH);
+			buttonSize = (int) (width / Board.X_MAX);
 		}
-		optionsPanel.setSize((int) (dim.getWidth() / 3), (int) (FIELD_HEIGHT * buttonSize));
-		fieldPanel.setSize((int) (FIELD_WIDTH * buttonSize), (int) (FIELD_HEIGHT * buttonSize));
-		for (int y = 0; y < FIELD_HEIGHT; y++) {
-			for (int x = 0; x < FIELD_WIDTH; x++) {
+		optionsPanel.setSize((int) (dim.getWidth() / 3), (int) (Board.Y_MAX * buttonSize));
+		fieldPanel.setSize((int) (Board.X_MAX * buttonSize), (int) (Board.Y_MAX * buttonSize));
+		for (int y = 0; y < Board.Y_MAX; y++) {
+			for (int x = 0; x < Board.X_MAX; x++) {
 				field[y][x].setSize(buttonSize, buttonSize);
 			}
 		}
@@ -167,24 +130,61 @@ public class GameUI extends JFrame implements Observer {
 	 * @param pressedButton The button for which to find a match within the array field.
 	 */
 	public void fieldUsed(JButton pressedButton) {
-		for(int y = 0; y < FIELD_HEIGHT; y++) {
-			for (int x = 0; x < FIELD_WIDTH; x++) {
+		for(int y = 0; y < Board.Y_MAX; y++) {
+			for (int x = 0; x < Board.X_MAX; x++) {
 				if (field[y][x].equals(pressedButton)) {
-					field[y][x].setEnabled(false);
+					if (field[y][x].getIcon() == ballNoneIcon || 
+							field[y][x].getIcon() == ballHintIcon) {
+						
+					}
 				}
 			}
 		}
 	}
 	
+	@Override
+	public void update(Observable o, Object arg) {
+		Ball[][] boardFields = (Ball[][]) arg;
+		for (int y = 0; y < Board.Y_MAX; y++) {
+			for (int x = 0; x < Board.X_MAX; x++) {
+				Ball ball = boardFields[x][y];
+				switch (ball) {
+				case RED:
+					field[y][x].setIcon(ballRedIcon);
+					field[y][x].removeActionListener(fieldListener);
+					break;
+				case BLUE:
+					field[y][x].setIcon(ballBlueIcon);
+					field[y][x].removeActionListener(fieldListener);
+					break;
+				case YELLOW:
+					field[y][x].setIcon(ballYellowIcon);
+					field[y][x].removeActionListener(fieldListener);
+					break;
+				case GREEN:
+					field[y][x].setIcon(ballGreenIcon);
+					field[y][x].removeActionListener(fieldListener);
+					break;
+				case HINT:
+					field[y][x].setIcon(ballHintIcon);
+				case EMPTY:
+					field[y][x].setIcon(ballNoneIcon);
+				default:
+					break;
+				}
+				
+			}
+		}
+	}	
+	
 	public String toString() {
 		String result = null;
 		result = "A GUI for the Rolit Game." + "\n" + "GUI size: " + "\n\t" + "Width = " +
 				getWidth() + " pixels." + "\n\t" + "Height = " + getHeight() + " pixels."
-				+ "\n" + "Board size:" + "\n\t" + "Width = " + FIELD_WIDTH + " ballen," +
-				"\n\t" + "Height = " + FIELD_HEIGHT + " ballen.";
+				+ "\n" + "Board size:" + "\n\t" + "Width = " + Board.X_MAX + " ballen," +
+				"\n\t" + "Height = " + Board.Y_MAX + " ballen.";
 		return result;
 	}
-	
 	
 	public static void main(String[] args) {
 		new GameUI();
