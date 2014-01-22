@@ -211,6 +211,13 @@ public class Board {
     	}
     	setInitial(balls);
     }
+    
+    /**
+     * Returs the whole field array.
+     */
+    public Ball[][] getFields() {
+		return fields;
+	}
 
     /**
      * Returns the content of the field referred to by the (row,col) pair.
