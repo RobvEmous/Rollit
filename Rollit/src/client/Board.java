@@ -228,8 +228,8 @@ public class Board {
      */
     public void setField(int col, int row, Ball b) {
     	applyMove(col, row, b);
-    	otherMoves = getOtherMoves();
     	fields[col][row] = b;
+    	otherMoves = getOtherMoves();
     }
     
     private void setField(int col, int row, Ball b, boolean apply) {
@@ -244,8 +244,8 @@ public class Board {
 	    	if (apply) {
 	    		applyMove(point, b);
 	    	}
-	    	otherMoves = getOtherMoves();
 	    	fields[point.x][point.y] = b;
+	    	otherMoves = getOtherMoves();
     	}	    	
     }
     
@@ -314,6 +314,7 @@ public class Board {
     public void setField(Point p, Ball b) {
     	applyMove(p, b);
     	fields[p.x][p.y] = b;
+    	otherMoves = getOtherMoves();
     }
     
     private void applyMove(Point p, Ball b) {
@@ -456,10 +457,13 @@ public class Board {
 
     private ArrayList<Point> getOtherMoves() {
     	ArrayList<Point> moves = new ArrayList<Point>();
-    	for (Point p : getEmptyFields()) {
-    		if (nextToOccupiedField(p)) {
-    			moves.add(p);
-    		}
+    	ArrayList<Point> emptyFields = getEmptyFields();
+    	if (emptyFields != null) {
+	    	for (Point p : emptyFields) {
+	    		if (nextToOccupiedField(p)) {
+	    			moves.add(p);
+	    		}
+	    	}
     	}
     	return moves;
     }
