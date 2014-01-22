@@ -162,19 +162,15 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 				switch (ball) {
 				case RED:
 					field[y][x].setIcon(ballRedIcon);
-					field[y][x].removeActionListener(fieldListener);
 					break;
 				case BLUE:
 					field[y][x].setIcon(ballBlueIcon);
-					field[y][x].removeActionListener(fieldListener);
 					break;
 				case YELLOW:
 					field[y][x].setIcon(ballYellowIcon);
-					field[y][x].removeActionListener(fieldListener);
 					break;
 				case GREEN:
 					field[y][x].setIcon(ballGreenIcon);
-					field[y][x].removeActionListener(fieldListener);
 					break;
 				case HINT:
 					field[y][x].setIcon(ballHintIcon);
@@ -203,9 +199,16 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 			JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
 		} else {
 			JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
-		}		
+		}
 	}
 	
+	public static void newPopup(String title, String message, boolean warning) {
+		if (!warning) {
+			JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+		}
+	}
 	
 	
 }

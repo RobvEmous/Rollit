@@ -60,8 +60,8 @@ public class HumanPlayer extends GamePlayer {
 				}
     			valid = board.isValidMove(getBall(), choice);
 	    		if (choice != null && !valid) {
-	    			System.out.println("ERROR: field (" + choice.x + "," + choice.y
-	                        + ") is no valid choice.");
+	    			GameUI.newPopup("Illegal move", "You can't turn that ball, " + 
+	    					"please choose another one.", false);
 	    			choice = null;
 	    		}
     		}
