@@ -40,7 +40,7 @@ public class Game extends Observable {
     
     private Random rand;
     
-    private boolean useUI = false;
+    private boolean useUI = true;
     
     private int turnCounter = 0;
     
@@ -196,7 +196,8 @@ public class Game extends Observable {
      */
     private void updateScreen() {
     	if (useUI) {
-    		
+    		setChanged();
+    		notifyObservers(board.getFields());
     	} else {
    			System.out.println(
     				"\n" + curr + "\n\n" + board.toString());
@@ -251,10 +252,13 @@ public class Game extends Observable {
     	
     	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED);
     	
+    	GameUI gui = new GameUI();
+    	
     	//Game game = new Game(s0, s1);
     	//Game game = new Game(n0, n1);
     	//Game game = new Game(s0, n1, n2, n3);
     	Game game = new Game(h0, s1);
+    	game.addObserver(gui);
     	
 		game.start();
     }

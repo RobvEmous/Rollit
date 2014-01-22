@@ -11,14 +11,6 @@ import javax.swing.JFrame;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-import client.Ball;
-import client.Board;
-import client.ComputerPlayer;
-import client.Game;
-import client.GamePlayer;
-import client.HumanPlayer;
-import client.NaiveStrategy;
-
 /**
  * The GUI for the Rolit game.
  * @author René Nijhuis
@@ -45,12 +37,12 @@ public class GameUI extends JFrame implements Observer {
 	private JButton[][] field;
 	private int buttonSize = 16;
 	
-	private ImageIcon ballNoneIcon = new ImageIcon("BallNone64.png");
-	private ImageIcon ballHintIcon = new ImageIcon("BallHint64.png");
-	private ImageIcon ballRedIcon = new ImageIcon("BallRed64.png");
-	private ImageIcon ballBlueIcon = new ImageIcon("BallBlue64.png");
-	private ImageIcon ballYellowIcon = new ImageIcon("BallYellow64.png");
-	private ImageIcon ballGreenIcon = new ImageIcon("BallGreen64.png");
+	private ImageIcon ballNoneIcon = new ImageIcon("Pictures/BallNone64.png");
+	private ImageIcon ballHintIcon = new ImageIcon("Pictures/BallHint64.png");
+	private ImageIcon ballRedIcon = new ImageIcon("Pictures/BallRed64.png");
+	private ImageIcon ballBlueIcon = new ImageIcon("Pictures/BallBlue64.png");
+	private ImageIcon ballYellowIcon = new ImageIcon("Pictures/BallYellow64.png");
+	private ImageIcon ballGreenIcon = new ImageIcon("Pictures/BallGreen64.png");
 	private Color backgroundColor = Color.BLACK;
 	
 	public GameUI() {
@@ -112,10 +104,10 @@ public class GameUI extends JFrame implements Observer {
 
 	@Override
 	public void update(Observable o, Object arg) {
-	/*	TODO
+		Ball[][] boardFields = (Ball[][]) arg;
 		for (int y = 0; y < Board.Y_MAX; y++) {
 			for (int x = 0; x < Board.X_MAX; x++) {
-				Ball ball = board.getField(x, y);
+				Ball ball = boardFields[x][y];
 				switch (ball) {
 				case RED:
 					field[y][x].setDisabledIcon(ballRedIcon);
@@ -142,7 +134,7 @@ public class GameUI extends JFrame implements Observer {
 				}
 				
 			}
-		}*/
+		}
 	}
 	
 	/**
@@ -192,6 +184,7 @@ public class GameUI extends JFrame implements Observer {
 				"\n\t" + "Height = " + FIELD_HEIGHT + " ballen.";
 		return result;
 	}
+	
 	
 	public static void main(String[] args) {
 		new GameUI();
