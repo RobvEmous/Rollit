@@ -27,6 +27,7 @@ import javax.swing.JTextField;
 
 /**
  * Login gui. A GUI for the login screen presented to the user at at startup.
+ * 
  * @author  Rob van Emous
  * @version v0.5
  */
@@ -47,7 +48,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	
 	private JButton bOffline;
 	
-	private String messageInit = "Must be connected first!";	
+	private String messageInit = "Must be connected first!";
 	
 	private Login login;
 	
@@ -147,7 +148,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	}
 
 	/**
-	 * listener for the "Connect" button
+	 * listener for the "Login" and "Play offline" button
 	 */
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();

@@ -24,4 +24,12 @@ public class Tools {
 		return new Point((int)x, (int)y);
 	}
 
+	public static String ArrayToString(String[] args) {
+		String string = "";
+		for (int i = 0; i < args.length - 1; i++) {
+			string += args[i] + " ";
+		}
+		return string + args[args.length - 1];
+	}
+
 }
