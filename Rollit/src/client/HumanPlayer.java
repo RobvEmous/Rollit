@@ -11,6 +11,9 @@ import java.util.Scanner;
  */
 public class HumanPlayer extends GamePlayer {
 	
+	public Point choice = null;
+	public GameUI gui;
+	
 	/**
 	 * If <code>true</code> uses UI to communicate, else uses System.out.
 	 */
@@ -40,15 +43,29 @@ public class HumanPlayer extends GamePlayer {
     
     /**
      * Asks the user to input the field where to place the next mark. This is
-     * done using the standard input/output.
+     * done either using the UI or the standard input/output.
      * 
      * @param board the game board
      * @return the player's chosen field
      */
     public Point determineMove(Board board) {
     	if (useUI) {
-    		
-    		return null;
+    		choice = null;
+    		boolean valid = false;
+    		while (choice == null || !valid) {
+    			try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+    			valid = board.isValidMove(getBall(), choice);
+	    		if (choice != null && !valid) {
+	    			System.out.println("ERROR: field (" + choice.x + "," + choice.y
+	                        + ") is no valid choice.");
+	    			choice = null;
+	    		}
+    		}
+    		return choice;
     	} else {
     		Point choice = null;
     		boolean valid = false;
@@ -92,6 +109,7 @@ public class HumanPlayer extends GamePlayer {
             } catch (InterruptedException e) {
             	// do not sleep
             }
+            scannerLine.close();
         } while (!intRead);
         return value;
     }

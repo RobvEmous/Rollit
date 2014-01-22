@@ -44,7 +44,7 @@ public class Game extends Observable {
     
     private int turnCounter = 0;
     
-    private int time = 1000;
+    private int time = 500;
     
     private String curr = "Current game situation:";
 
@@ -198,6 +198,9 @@ public class Game extends Observable {
     	if (useUI) {
     		setChanged();
     		notifyObservers(board.getFields());
+   			System.out.println(
+    				"\n" + curr + "\n\n" + board.toString());
+  			System.out.println(ballOccurences());
     	} else {
    			System.out.println(
     				"\n" + curr + "\n\n" + board.toString());
@@ -250,14 +253,14 @@ public class Game extends Observable {
     	GamePlayer n2 = new ComputerPlayer(Ball.GREEN,new NaiveStrategy());
     	GamePlayer n3 = new ComputerPlayer(Ball.YELLOW,new NaiveStrategy());
     	
-    	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED);
+    	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED, true);
     	
-    	GameUI gui = new GameUI();
+    	GameUI gui = new GameUI((HumanPlayer) h0);
     	
     	//Game game = new Game(s0, s1);
     	//Game game = new Game(n0, n1);
     	//Game game = new Game(s0, n1, n2, n3);
-    	Game game = new Game(h0, s1);
+    	Game game = new Game(h0, s1,s2,s3);
     	game.addObserver(gui);
     	
 		game.start();

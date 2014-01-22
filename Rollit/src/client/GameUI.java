@@ -4,21 +4,28 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 /**
- * The GUI for the Rolit game.
+ * <h1>The GUI for the Rolit game.</h1>
  * @author René Nijhuis
- * @version 0.2
+ * @version 0.6
  */
-public class GameUI extends JFrame implements Observer {
+public class GameUI extends JFrame implements Observer, PopupUI {
 	private static final long serialVersionUID = 5844574958336659575L;
+	
+	private Dimension windowSize = new Dimension(800,600);
+	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+	
+	private HumanPlayer human;
 	
 	private ResizeListener resizeListener;
 	private FieldListener fieldListener;
@@ -37,9 +44,10 @@ public class GameUI extends JFrame implements Observer {
 	private ImageIcon ballGreenIcon = new ImageIcon("Pictures/BallGreen64.png");
 	private Color backgroundColor = Color.BLACK;
 	
-	public GameUI() {
+	public GameUI(HumanPlayer h) {
 		super("Rolit");
 		initialize();
+		human = h;
 	}
 	
 	/**
@@ -50,6 +58,9 @@ public class GameUI extends JFrame implements Observer {
 	 */
 	private void initialize() {
 		initListeners();
+		
+		setSize(windowSize);
+		setLocation(Tools.getCenterLocation(screenSize, windowSize));
 		
 		optionsPanel = new JPanel();
 		optionsPanel.setSize((int) (getSize().getWidth() / 3), (Board.Y_MAX * buttonSize));
@@ -135,7 +146,7 @@ public class GameUI extends JFrame implements Observer {
 				if (field[y][x].equals(pressedButton)) {
 					if (field[y][x].getIcon() == ballNoneIcon || 
 							field[y][x].getIcon() == ballHintIcon) {
-						
+						human.choice = new Point(x,y);
 					}
 				}
 			}
@@ -185,9 +196,16 @@ public class GameUI extends JFrame implements Observer {
 				"\n\t" + "Height = " + Board.Y_MAX + " ballen.";
 		return result;
 	}
-	
-	public static void main(String[] args) {
-		new GameUI();
+
+	@Override
+	public void addPopup(String title, String message, boolean warning) {
+		if (!warning) {
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+		}		
 	}
+	
+	
 	
 }

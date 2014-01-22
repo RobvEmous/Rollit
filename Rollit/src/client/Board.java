@@ -174,10 +174,14 @@ public class Board {
      * @param balls the balls used by the players
      */
     public void setInitial() {
-    	fields[leftUpper.x][leftUpper.y] = Ball.RED;
+    	/*fields[leftUpper.x][leftUpper.y] = Ball.RED;
     	fields[rightUpper.x][rightUpper.y] = Ball.YELLOW;
     	fields[rightLower.x][rightLower.y] = Ball.GREEN;
-    	fields[leftLower.x][leftLower.y] = Ball.BLUE;
+    	fields[leftLower.x][leftLower.y] = Ball.BLUE;*/
+    	fields[0][0] = Ball.RED;
+    	fields[X_MAX-1][0] = Ball.YELLOW;
+    	fields[X_MAX - 1][Y_MAX - 1] = Ball.GREEN;
+    	fields[0][Y_MAX - 1] = Ball.BLUE;
     	otherMoves = getOtherMoves();
     }
     
@@ -240,6 +244,7 @@ public class Board {
 	    	if (apply) {
 	    		applyMove(point, b);
 	    	}
+	    	otherMoves = getOtherMoves();
 	    	fields[point.x][point.y] = b;
     	}	    	
     }
@@ -759,7 +764,7 @@ public class Board {
     			s = y + " |";
     		}
         	for (int x = 0; x < X_MAX; x++) {
-        		s += " " + rankMap[x][y] + " |";
+        		s += " " + fields[x][y].veryShortName() + " |";
         	}
         	boardPrint += s + "\n";   	
     	}
