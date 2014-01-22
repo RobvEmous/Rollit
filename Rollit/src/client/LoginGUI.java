@@ -1,14 +1,11 @@
 package client;
 
-import java.awt.BorderLayout;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
-import java.awt.MenuBar;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,12 +13,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 
-import javax.swing.AbstractAction;
-import javax.swing.AbstractButton;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -31,7 +23,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 /**
@@ -44,9 +35,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	
 	private static final Insets PADDING = new Insets(5, 5, 5, 5);
 	
-	private int screenWidth = 410;
-	private int screenHeight = 165;
-	private Dimension windowSize = new Dimension(screenWidth, screenHeight);
+	private Dimension windowSize = new Dimension(410, 165);
 	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	
 	private JButton bLogin;
@@ -84,8 +73,8 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 
 	/** builds the GUI. */
 	public void buildGUI() {
-		setSize(screenWidth, screenHeight);
-		setWindowLocation();
+		setSize(windowSize);
+		setLocation(Tools.getCenterLocation(screenSize, windowSize));
 		
 		// declare and create menu
 		JMenuBar menuBar = new JMenuBar();
@@ -218,13 +207,6 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	public void keyPressed(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {}
-	
-	private void setWindowLocation() {
-		setLocation(
-		(int)(screenSize.getWidth() / 2 - windowSize.width / 2),
-		(int)(screenSize.getHeight() / 2 - windowSize.height / 2)
-		);
-	}
 	
 	@Override
 	public void addPopup(String title, String message, boolean warning) {
