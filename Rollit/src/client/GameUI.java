@@ -65,7 +65,7 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		optionsPanel = new JPanel();
 		optionsPanel.setSize((int) (getSize().getWidth() / 3), (Board.Y_MAX * buttonSize));
 		
-		GridLayout fieldLayout = new GridLayout(8, 8);
+		GridLayout fieldLayout = new GridLayout(Board.X_MAX, Board.Y_MAX);
 		fieldPanel = new JPanel(fieldLayout);
 		fieldPanel.setSize((Board.X_MAX * buttonSize), (Board.Y_MAX * buttonSize));
 		
