@@ -173,28 +173,11 @@ public class Board {
      * players and the ball belonging to each player. 
      * @param balls the balls used by the players
      */
-    public void setInitial(Ball[] balls) {
-    	if (balls.length == 2) {
-    		int start = rand.nextInt(2);
-    		int other = Math.abs(start - 1);
-        	fields[leftUpper.x][leftUpper.y] = balls[start];
-        	fields[rightUpper.x][rightUpper.y] = balls[other];
-        	fields[rightLower.x][rightLower.y] = balls[start];
-        	fields[leftLower.x][leftLower.y] = balls[other];
-    	} else {
-    		ArrayList<Ball> balls2 = new ArrayList<Ball>(Arrays.asList(balls));
-    		Ball one = balls2.get(rand.nextInt(4));
-    		balls2.remove(one);
-    		Ball two = balls2.get(rand.nextInt(3));
-    		balls2.remove(two);
-    		Ball three = balls2.get(rand.nextInt(2));
-    		balls2.remove(three);
-    		Ball four = balls2.get(0);
-        	fields[leftUpper.x][leftUpper.y] = one;
-        	fields[rightUpper.x][rightUpper.y] = two;
-        	fields[rightLower.x][rightLower.y] = three;
-        	fields[leftLower.x][leftLower.y] = four;
-    	}
+    public void setInitial() {
+    	fields[leftUpper.x][leftUpper.y] = Ball.RED;
+    	fields[rightUpper.x][rightUpper.y] = Ball.YELLOW;
+    	fields[rightLower.x][rightLower.y] = Ball.GREEN;
+    	fields[leftLower.x][leftLower.y] = Ball.BLUE;
     	otherMoves = getOtherMoves();
     }
     
@@ -209,7 +192,7 @@ public class Board {
     	for (int i = 0; i < players.length; i++) {
     		balls[i] = players[i].getBall();
     	}
-    	setInitial(balls);
+    	setInitial();
     }
     
     /**
@@ -808,7 +791,7 @@ public class Board {
     public static void main(String[] args) {
 		Board board = new Board();
 		System.out.println(board.toString());
-		board.setInitial(new Ball[]{Ball.BLUE,Ball.RED});
+		board.setInitial();
 		System.out.println(board.toString());
 		System.out.println(board.getRankMap());
 	}
