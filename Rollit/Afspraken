@@ -1,0 +1,35 @@
+Afspraken
+
+	Javadoc
+		Algemeen
+			- Alle variabele namen staan tussen <code> en </code>.
+		
+		Voor klassen
+			- Het doel van de klasse samengevat in één regel tussen 
+			  <h1> en </h1> tekens.
+			- Algemene uitleg van de werking en toepassing van de klasse. 
+			- @author:
+				- Geeft de voor en achternaam van de persoon of personen 
+				  aan die aan deze klasse hebben gewerkt.
+			- @version:
+				- Wordt tussen v0.1 tot v1.0 gebruikt om aan te geven hoe
+				  ver de klasse gevorderd is (als percentage), waarbij de
+				  classe in principe werkend is vanaf v1.0.
+				- Wordt vanaf v1.0 gebruikt om aan te geven dat er extra 
+				  functionaliteit is toegevoegd aan de klasse. Per 
+				  'uitbreidingssessie' huidige versie + 0.1.
+		
+		Voor methoden
+			- Het doel/nut van de methode samengevat in één regel 
+			  afgesloten met een punt. Als de methode een argumentloze
+			  void is is dit de enige uitleg en als de methode 
+			  argumentloos is maar geen void id dit ook de enige uitleg en
+			  wordt er niet @return gebruikt maar gewoon "Returns..." in 
+			  deze uitleg.
+			- @param:
+				- voor alle argumenten;
+					- Argumentnaam
+					- Korte beschrijving zonder hoofdletter of punt én
+					  in deze zin wordt de argumentnaam niet als eerste 
+					  woord van de zin gezien.
+			- @return legt uit wat de methode teruggeeft.
