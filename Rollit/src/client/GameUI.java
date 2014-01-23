@@ -2,15 +2,19 @@ package client;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.util.Observable;
 import java.util.Observer;
-
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -30,18 +34,26 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	private ResizeListener resizeListener;
 	private FieldListener fieldListener;
 	
-	private JPanel optionsPanel;	
+	private JPanel optionsPanel;
+	private JPanel ballCountPanel;
 	private JPanel fieldPanel;
 	
 	private JButton[][] field;
 	private int buttonSize = 16;
 	
-	private ImageIcon ballNoneIcon = new ImageIcon("Pictures/BallNone64.png");
-	private ImageIcon ballHintIcon = new ImageIcon("Pictures/BallHint64.png");
-	private ImageIcon ballRedIcon = new ImageIcon("Pictures/BallRed64.png");
-	private ImageIcon ballBlueIcon = new ImageIcon("Pictures/BallBlue64.png");
-	private ImageIcon ballYellowIcon = new ImageIcon("Pictures/BallYellow64.png");
-	private ImageIcon ballGreenIcon = new ImageIcon("Pictures/BallGreen64.png");
+	private int[] ballCounts = new int[] {0, 0, 0, 0};
+	private JLabel ballCountRedLabel;
+	private JLabel ballCountBlueLabel;
+	private JLabel ballCountYellowLabel;
+	private JLabel ballCountGreenLabel;
+	
+	
+	private ImageIcon ballNoneIcon = new ImageIcon("Pictures/BallNoneBig.png");
+	private ImageIcon ballHintIcon = new ImageIcon("Pictures/BallHintBig.png");
+	private ImageIcon ballRedIcon = new ImageIcon("Pictures/BallRedBig.png");
+	private ImageIcon ballBlueIcon = new ImageIcon("Pictures/BallBlueBig.png");
+	private ImageIcon ballYellowIcon = new ImageIcon("Pictures/BallYellowBig.png");
+	private ImageIcon ballGreenIcon = new ImageIcon("Pictures/BallGreenBig.png");
 	private Color backgroundColor = Color.BLACK;
 	
 	public GameUI(HumanPlayer h) {
@@ -65,12 +77,57 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		optionsPanel = new JPanel();
 		optionsPanel.setSize((int) (getSize().getWidth() / 3), (Board.Y_MAX * buttonSize));
 		
+		ballCountPanel = new JPanel(new GridBagLayout());
+		GridBagConstraints ballCountRedIconConstraints = new GridBagConstraints(0, 0, 
+				1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		JLabel ballCountRedIconLabel = new JLabel(new ImageIcon("Pictures/BallRedIcon16.png"));
+		GridBagConstraints ballCountRedConstraints = new GridBagConstraints(1, 0, 
+				3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		ballCountRedLabel = new JLabel(String.valueOf(ballCounts[0]));
+		GridBagConstraints ballCountBlueIconConstraints = new GridBagConstraints(0, 1, 
+				1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		JLabel ballCountBlueIconLabel = new JLabel(new ImageIcon("Pictures/BallBlueIcon16.png"));
+		GridBagConstraints ballCountBlueConstraints = new GridBagConstraints(1, 1, 
+				3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		ballCountBlueLabel = new JLabel(String.valueOf(ballCounts[1]));
+		GridBagConstraints ballCountYellowIconConstraints = new GridBagConstraints(0, 2, 
+				1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		JLabel ballCountYellowIconLabel = new JLabel(new ImageIcon("Pictures/BallYellowIcon16.png"));
+		GridBagConstraints ballCountYellowConstraints = new GridBagConstraints(1, 2, 
+				3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		ballCountYellowLabel = new JLabel(String.valueOf(ballCounts[2]));
+		GridBagConstraints ballCountGreenIconConstraints = new GridBagConstraints(0, 0, 
+				1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		JLabel ballCountGreenIconLabel = new JLabel(new ImageIcon("Pictures/BallGreenIcon16.png"));
+		GridBagConstraints ballCountGreenConstraints = new GridBagConstraints(1, 3, 
+				3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, 
+				new Insets(0,0,0,0), 0, 0);
+		ballCountGreenLabel = new JLabel(String.valueOf(ballCounts[3]));
+		ballCountPanel.add(ballCountRedIconLabel, ballCountRedIconConstraints);
+		ballCountPanel.add(ballCountRedLabel, ballCountRedConstraints);
+		ballCountPanel.add(ballCountBlueIconLabel, ballCountBlueIconConstraints);
+		ballCountPanel.add(ballCountBlueLabel, ballCountBlueConstraints);
+		ballCountPanel.add(ballCountYellowIconLabel, ballCountYellowIconConstraints);
+		ballCountPanel.add(ballCountYellowLabel, ballCountYellowConstraints);
+		ballCountPanel.add(ballCountGreenIconLabel, ballCountGreenIconConstraints);
+		ballCountPanel.add(ballCountGreenLabel, ballCountGreenConstraints);
+		
+		optionsPanel.add(ballCountPanel);
+		
 		GridLayout fieldLayout = new GridLayout(Board.X_MAX, Board.Y_MAX);
 		fieldPanel = new JPanel(fieldLayout);
 		fieldPanel.setSize((Board.X_MAX * buttonSize), (Board.Y_MAX * buttonSize));
 		
 		createField();
 		
+		rescale();
 		add(fieldPanel);
 		add(optionsPanel);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -132,9 +189,69 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 				field[y][x].setSize(buttonSize, buttonSize);
 			}
 		}
+		resizeIcons();		
 		validate();
 	}
 	
+	/**
+	 * This method resizes the ball icons.</br>
+	 * It does so by first making new icons of the original sized image and scaling them.
+	 * It then checks for all buttons which icon it has and gives that button the new
+	 * scaled version of that icon. At the end it also sets the old icons to the new 
+	 * scaled ones so they get used from there on.
+	 */
+	private void resizeIcons() {
+		//Creating the new scaled icons.
+		ImageIcon newBallNoneIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallNoneBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+		ImageIcon newBallHintIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallHintBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+		ImageIcon newBallRedIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallRedBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+		ImageIcon newBallBlueIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallBlueBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+		ImageIcon newBallYellowIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallYellowBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+		ImageIcon newBallGreenIcon = new ImageIcon(
+				(new ImageIcon("Pictures/BallGreenBig.png").getImage())
+				.getScaledInstance(buttonSize, buttonSize, Image.SCALE_FAST));
+
+		//Changing the icons that are displayed by the buttons.
+		for (int y = 0; y < Board.Y_MAX; y++) {
+			for ( int x = 0; x < Board.X_MAX; x++) {
+				ImageIcon currentIcon = (ImageIcon) field[y][x].getIcon();
+				if (currentIcon.equals(ballNoneIcon)) {
+					field[y][x].setIcon(newBallNoneIcon);
+				} else if (currentIcon.equals(ballHintIcon)) {
+					field[y][x].setIcon(newBallHintIcon);
+				} else if (currentIcon.equals(ballRedIcon)) {
+					field[y][x].setIcon(newBallRedIcon);
+				} else if (currentIcon.equals(ballBlueIcon)) {
+					field[y][x].setIcon(newBallBlueIcon);
+				} else if (currentIcon.equals(ballYellowIcon)) {
+					field[y][x].setIcon(newBallYellowIcon);
+				} else if (currentIcon.equals(ballGreenIcon)) {
+					field[y][x].setIcon(newBallGreenIcon);
+				} else {
+					System.out.println("Well, this doesn't quite work as well as thought");
+				}
+			}
+		}
+		
+		//Overwriting the old icons with the new ones.
+		ballNoneIcon = newBallNoneIcon;
+		ballHintIcon = newBallHintIcon;
+		ballRedIcon = newBallRedIcon;
+		ballBlueIcon = newBallBlueIcon;
+		ballYellowIcon = newBallYellowIcon;
+		ballGreenIcon = newBallGreenIcon;
+	}
+
 	/**
 	 * When this method is called is goes through the array field to see which button matches 
 	 * the argument. If it finds one that matches the argument it then disables this button.
@@ -144,10 +261,7 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		for(int y = 0; y < Board.Y_MAX; y++) {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				if (field[y][x].equals(pressedButton)) {
-					if (field[y][x].getIcon() == ballNoneIcon || 
-							field[y][x].getIcon() == ballHintIcon) {
 						human.choice = new Point(x,y);
-					}
 				}
 			}
 		}
@@ -156,21 +270,29 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	@Override
 	public void update(Observable o, Object arg) {
 		Ball[][] boardFields = (Ball[][]) arg;
+		ballCounts[0] = 0;
+		ballCounts[1] = 0;
+		ballCounts[2] = 0;
+		ballCounts[3] = 0;
 		for (int y = 0; y < Board.Y_MAX; y++) {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				Ball ball = boardFields[x][y];
 				switch (ball) {
 				case RED:
 					field[y][x].setIcon(ballRedIcon);
+					ballCounts[0]++;
 					break;
 				case BLUE:
 					field[y][x].setIcon(ballBlueIcon);
+					ballCounts[1]++;
 					break;
 				case YELLOW:
 					field[y][x].setIcon(ballYellowIcon);
+					ballCounts[2]++;
 					break;
 				case GREEN:
 					field[y][x].setIcon(ballGreenIcon);
+					ballCounts[3]++;
 					break;
 				case HINT:
 					field[y][x].setIcon(ballHintIcon);
@@ -182,6 +304,10 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 				
 			}
 		}
+		ballCountRedLabel.setText(String.valueOf(ballCounts[0]));
+		ballCountBlueLabel.setText(String.valueOf(ballCounts[1]));
+		ballCountYellowLabel.setText(String.valueOf(ballCounts[2]));
+		ballCountGreenLabel.setText(String.valueOf(ballCounts[3]));
 	}	
 	
 	public String toString() {

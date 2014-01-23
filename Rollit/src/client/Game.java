@@ -198,8 +198,6 @@ public class Game extends Observable {
     	if (useUI) {
     		setChanged();
     		notifyObservers(board.getFields());
-   			System.out.println(
-    				"\n" + curr + "\n\n" + board.toString());
   			System.out.println(ballOccurences());
     	} else {
    			System.out.println(
