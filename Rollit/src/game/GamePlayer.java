@@ -2,6 +2,9 @@ package game;
 
 import java.awt.Point;
 
+import clientAndServer.Ball;
+import clientAndServer.Board;
+
 /**
  * Abstraction of a Player in the Rollit game.
  * @author Rob van Emous

@@ -32,6 +32,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import client.PopupUI;
+import clientAndServer.Ball;
+import clientAndServer.Board;
 import clientAndServer.Tools;
 
 /**

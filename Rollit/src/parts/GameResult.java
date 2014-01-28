@@ -1,10 +1,11 @@
 package parts;
 
-import game.Board;
 import game.GamePlayer;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import clientAndServer.Board;
 
 
 public class GameResult {

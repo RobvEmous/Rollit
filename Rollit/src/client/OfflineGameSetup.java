@@ -1,6 +1,6 @@
 package client;
 
-import game.Ball;
+import clientAndServer.Ball;
 import game.ComputerPlayer;
 import game.OfflineGame;
 import game.GamePlayer;

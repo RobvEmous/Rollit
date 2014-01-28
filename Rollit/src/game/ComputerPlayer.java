@@ -2,6 +2,9 @@ package game;
 
 import java.awt.Point;
 
+import clientAndServer.Ball;
+import clientAndServer.Board;
+
 public class ComputerPlayer extends GamePlayer {
 
 	private Strategy strategy;

@@ -3,6 +3,9 @@ package game;
 import java.awt.Point;
 import java.util.Scanner;
 
+import clientAndServer.Ball;
+import clientAndServer.Board;
+
 /**
  * Class for maintaining a human player in the Rollit game.
  * 
