@@ -313,13 +313,7 @@ public class OfflineGame extends Observable {
     	
     	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED, true);
     	GamePlayer h1 = new HumanPlayer("René",Ball.BLUE, true);
-    	
-    	//Game game = new Game(s0, s1);
-    	//Game game = new Game(n0, n1);
-    	//Game game = new Game(s0, n1, n2, n3);
-    	OfflineGame game = new OfflineGame(h0, h1, s2, s3);
-    	
-		game.start();
+
     }
 
 	public void goBack() {

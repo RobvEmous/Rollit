@@ -26,8 +26,17 @@ public class OfflineGameSetup {
 	
 	public void startGame(String[] players) {
 		ui.dispose();
-		OfflineGame game = new OfflineGame(this, namesToPlayers(players));
-		game.start();
+		final OfflineGameSetup c = this;
+		final String[] playerss = players;
+		Thread newGame = new Thread(new Runnable() {	
+			@Override
+			public void run() {
+				OfflineGame game = new OfflineGame(c, namesToPlayers(playerss));
+				game.start();
+				
+			}
+		});
+		newGame.start();
 	}
 	
 	public void goBack() {
@@ -42,10 +51,12 @@ public class OfflineGameSetup {
 	
 	private GamePlayer[] namesToPlayers(String[] names) {
 		Ball ball = Ball.RED;
+		int humanCounter = 1;
 		GamePlayer[] players = new GamePlayer[names.length];
 		for (int i = 0; i < names.length; i++) {	
 			if (names[i].equals(playersKinds[0])) {
-				players[i] = new HumanPlayer(main.getClientName(), ball);
+				players[i] = new HumanPlayer(main.getClientName() + humanCounter, ball);
+				humanCounter++;
 			} else if (names[i].equals(playersKinds[1])) {
 				players[i] = new ComputerPlayer(ball, new NaiveStrategy());
 			} else if (names[i].equals(playersKinds[2])) {

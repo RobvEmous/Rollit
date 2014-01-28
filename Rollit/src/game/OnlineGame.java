@@ -6,6 +6,8 @@ import java.util.Observer;
 import java.util.Random;
 import java.util.Scanner;
 
+import client.Main;
+import client.OfflineGameSetup;
 import clientAndServer.Ball;
 import clientAndServer.Board;
 
@@ -20,7 +22,7 @@ public class OnlineGame extends Observable {
 	/**
 	 * The offline game setup menu.
 	 */
-	private OfflineGameSetup setup;
+	private Main main;
 
     /**
      * The board of the game.
@@ -67,8 +69,8 @@ public class OnlineGame extends Observable {
      * 
      * @param thePlayers the players
      */
-    public OfflineGame(OfflineGameSetup s, GamePlayer[] thePlayers) {
-    	setup = s;
+    public OnlineGame(Main s, GamePlayer[] thePlayers) {
+    	main = s;
     	nrOfPlayers = thePlayers.length;
         board = new Board();
         players = thePlayers;
@@ -88,8 +90,8 @@ public class OnlineGame extends Observable {
      * @param s2 the third player
      * @param s3 the fourth player
      */
-    public OnlineGame(GamePlayer s0, GamePlayer s1, GamePlayer s2, GamePlayer s3) {
-    	this(new GamePlayer[]{s0, s1, s2, s3});
+    public OnlineGame(Main m, GamePlayer s0, GamePlayer s1, GamePlayer s2, GamePlayer s3) {
+    	this(m, new GamePlayer[]{s0, s1, s2, s3});
     }
     
     /**
@@ -99,8 +101,8 @@ public class OnlineGame extends Observable {
      * @param s1 the second player
      * @param s2 the third player
      */
-    public OnlineGame(GamePlayer s0, GamePlayer s1, GamePlayer s2) {
-    	this(new GamePlayer[]{s0, s1, s2});
+    public OnlineGame(Main m, GamePlayer s0, GamePlayer s1, GamePlayer s2) {
+    	this(m, new GamePlayer[]{s0, s1, s2});
     }
     
     /**
@@ -109,8 +111,8 @@ public class OnlineGame extends Observable {
      * @param s0 the first player
      * @param s1 the second player
      */
-    public OnlineGame(GamePlayer s0, GamePlayer s1) {
-    	this(new GamePlayer[]{s0, s1});
+    public OnlineGame(Main m, GamePlayer s0, GamePlayer s1) {
+    	this(m, new GamePlayer[]{s0, s1});
     }
 
     /**

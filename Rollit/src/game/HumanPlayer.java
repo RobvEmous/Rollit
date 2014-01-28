@@ -40,7 +40,6 @@ public class HumanPlayer extends GamePlayer {
      */
     public HumanPlayer(String name, Ball ball) {
         super(name, ball);
-        this.useUI = false;
         scanner = new Scanner(System.in);
     }
     
