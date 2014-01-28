@@ -1,0 +1,33 @@
+package exceptions;
+
+import java.io.IOException;
+
+/**
+ * Signals that communication with this client is not possible anymore. 
+ * The client most likely rage-quited ;).
+ * 
+ * @author Rob van Emous
+ *
+ */
+public class ClientNotFoundException extends Exception {
+	private static final long serialVersionUID = 4036764230921915113L;
+
+    public ClientNotFoundException() {
+        super();
+    }
+
+    public ClientNotFoundException(String message) {
+        super(message);
+    }
+
+
+    public ClientNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+
+    public ClientNotFoundException(Throwable cause) {
+        super(cause);
+    }
+
+}
