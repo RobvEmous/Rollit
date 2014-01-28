@@ -13,6 +13,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -24,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+
+import clientAndServer.Tools;
 
 /**
  * Login gui. A GUI for the login screen presented to the user at at startup.
@@ -46,6 +50,9 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	private JPasswordField password;
 	private String passToolTip = "Fill in your password or a new password";
 	
+	private String errorWrongPass = "The password doesn't correspond to the username!";
+	private String messageWelcome = "Welcome, ";
+	
 	private JButton bOffline;
 	
 	private String messageInit = "Must be connected first!";
@@ -55,13 +62,14 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	private boolean nameTyped = false;
 	private boolean passwordTyped = false;
 	
-	
-	/** Constructs a ServerGUI object. */
-	public LoginGUI() {
+	private int port = 0;
+	private InetAddress adress;
+			
+	/** Constructs a LoginGUI object. */
+	public LoginGUI(Login login) {
 		super("Rollit Login");
 		buildGUI();
 		setVisible(true);
-
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				e.getWindow().dispose();
@@ -70,6 +78,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 				System.exit(0);
 			}
 		});
+		this.login = login;
 	}
 
 	/** builds the GUI. */
@@ -152,30 +161,36 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	 */
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();
+		if (src.equals(bLogin)) {
+			String theName = name.getText();
+			String thePass = new String(password.getPassword());
+			if (login.tryLogin(theName, thePass)) {
+				setVisible(false);
+				reset();
+			}
+		} else if (src.equals(bOffline)) {
+			String theName = name.getText();
+			login.goOffline(theName);
+			setVisible(false);
+			reset();
+		}			
 	}
 
-	/** pops up a message to the user  */
-	public void addPopupMessage(String title, String msg, boolean warning) {
-		if (!warning) {
-			JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
 	public void reset() {
 		name.setText("");
 		password.setText("");
-		bLogin.setEnabled(false);
-		bOffline.setEnabled(false);
+		nameTyped = false;
+		passwordTyped = false;
+		updateLoginButton();
+		updateOfflineButton();
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {	
 		Object trigger = e.getSource();
 		updateFieldBooleans(e, (JTextField) trigger);
-		updateLoginButton(e, (JTextField) trigger);
-		updateOfflineButton(e, (JTextField) trigger);
+		updateLoginButton();
+		updateOfflineButton();
 	}
 	
 	private void updateFieldBooleans(KeyEvent e, JTextField item) {
@@ -188,7 +203,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 		} 	
 	}
 	
-	private void updateLoginButton(KeyEvent e, JTextField item) {
+	private void updateLoginButton() {
 		if (nameTyped && passwordTyped && !bLogin.isEnabled()) {
 			bLogin.setEnabled(true);
 		} else if ((!nameTyped || !passwordTyped) && bLogin.isEnabled()) {
@@ -196,7 +211,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 		}
 	}
 	
-	private void updateOfflineButton(KeyEvent e, JTextField item) {	
+	private void updateOfflineButton() {	
 		if (nameTyped && !bOffline.isEnabled()) {
 			bOffline.setEnabled(true);
 		} else if (!nameTyped && bOffline.isEnabled()) {
@@ -217,11 +232,6 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 			JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
 		}
 		
-	}
-	
-	/** Start a LoginGUI application */
-	public static void main(String[] args) {
-		LoginGUI gui = new LoginGUI();
 	}
 
 }

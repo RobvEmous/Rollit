@@ -1,4 +1,4 @@
-package client;
+package game;
 
 import java.awt.Point;
 import java.util.Scanner;
@@ -17,7 +17,7 @@ public class HumanPlayer extends GamePlayer {
 	/**
 	 * If <code>true</code> uses UI to communicate, else uses System.out.
 	 */
-	private boolean useUI = false;
+	private boolean useUI = true;
 	
 	private Scanner scanner;
 
@@ -54,7 +54,7 @@ public class HumanPlayer extends GamePlayer {
     		boolean valid = false;
     		while (choice == null || !valid) {
     			try {
-					Thread.sleep(500);
+					Thread.sleep(20);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}

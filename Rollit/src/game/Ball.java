@@ -1,4 +1,4 @@
-package client;
+package game;
 
 /**
  * Represents a ball in the Rollit game. There are four playable values: <br>

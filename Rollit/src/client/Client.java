@@ -7,14 +7,19 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+import clientAndServer.Command;
+import clientAndServer.Tools;
+import exceptions.ServerNotFoundException;
 
 /**
  * The Client 
  * 
  * @author  Rob van Emous
- * @version v0.1
+ * @version v0.5
  */
 public class Client extends Thread {
 
@@ -22,24 +27,72 @@ public class Client extends Thread {
 	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
+	private ArrayList<Command> commands;
+	private ArrayList<Command> answers;
+	private static final int MAX_SIZE = 50;
+	public static final String ACKNOWLEDGED = "Ack";
+	public static final int PORT = 8080;
 
 	/**
 	 * Constructs a Client-object and tries to make a socket connection
 	 */
-	public Client(String name, InetAddress host, int port) throws IOException {
-		clientName = name;
-		sock = new Socket(host, port);
-		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+	public Client(String name, InetAddress host, int port) throws ServerNotFoundException {
+		clientName = name;	
+		commands = new ArrayList<Command>();
+		answers = new ArrayList<Command>();
+		try {
+			sock = new Socket(host, port);
+			in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+			out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
+			throw new ServerNotFoundException();
+		}
+		
+	}
+	
+	public Client(String name, int port) throws IOException {
+		this(name, InetAddress.getLocalHost(), port);
+	}
+	
+	public Client(String name, InetAddress host) throws IOException {
+		this(name, host, PORT);
+	}
+	
+	public Client(String name) throws IOException {
+		this(name, PORT);
+	}
+
+	/** returns the client name */
+	public String getClientName() {
+		return clientName;
 	}
 
 	/**
-	 * Reads the messages in the socket connection. Each message will be forwarded to the MessageUI
+	 * Reads the messages in the socket connection. 
 	 */
 	public void run() {
 		try {
 			while (true) {
-				Command command = waitForCommand();
+				Command c = waitForCommand();
+				if (c.getId().contains(ACKNOWLEDGED)) {
+					synchronized (answers) {
+						String id = c.getId();
+						c.setId(id.substring(0, id.length() - ACKNOWLEDGED.length()));
+						answers.add(c);
+						if (answers.size() > MAX_SIZE) {
+							removeOldestAnswer();
+						}
+					}
+				} else {
+					synchronized (commands) {
+						commands.add(c);
+						if (commands.size() > MAX_SIZE) {
+							removeOldestCommand();
+						}
+					}
+				}
+
 			}	
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -75,7 +128,7 @@ public class Client extends Thread {
 	}
 	
 	/** send a message to a ClientHandler. */
-	private void sendMessage(String msg) throws IOException {
+	private synchronized void sendMessage(String msg) throws IOException {
 		try {
 			out.write(msg + "\n");
 			out.flush();
@@ -84,66 +137,77 @@ public class Client extends Thread {
 		}	
 	}
 	
-	private void sendCommand(String command, String[] args) throws IOException {
+	/**
+	 * 
+	 * @param command
+	 * @param args
+	 * @throws IOException
+	 */
+	public void sendCommand(String command, String[] args) throws IOException {
 		sendMessage(command + " " + Tools.ArrayToString(args));
-	}
-
-
-	/** returns the client name */
-	public String getClientName() {
-		return clientName;
 	}
 	
 	/**
-	 * 
-	 * @param name
-	 * @param password
-	 * @return 0 if exception, 1 if wrong password, 2 if succes
+	 * Returns the list of commands from the server.
 	 */
-	public int login(String name, String password) {
-		String[] args = {password};
-		try {
-			sendCommand(name, args);
-			Command answer = waitForCommand();
-			return 2;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return 0;
-		}
-		
+	public ArrayList<Command> getCommands() {
+		synchronized (commands) {
+			return commands;
+		}		
 	}
 	
-	public boolean join(int nrOfPlayers) {
-		return false;
-		
+	/**
+	 * Removes the specified command from the list.
+	 * This should only be done after responding to this command.
+	 * @param c the command to be removed
+	 */
+	public void removeCommand(Command c) {
+		synchronized (commands) {
+			commands.remove(c);
+		}		
 	}
 	
-	public boolean challenge(String[] playerNames) {
-		return false;
-		
+	/**
+	 * Removes the oldest command from the list (the one with index 0).
+	 */
+	public void removeOldestCommand() {
+		synchronized (commands) {
+			commands.remove(0);
+		}	
 	}
 	
-	public boolean disjoin() {
-		return false;
-		
+	/**
+	 * Returns the list of answers from the server.
+	 */
+	public ArrayList<Command> getAnswers() {
+		synchronized (answers) {
+			return answers;
+		}		
 	}
 	
-	public boolean chat(String message) {
-		return false;
-		
+	/**
+	 * Removes the specified answer from the list.
+	 * This should only be done after responding to this answer.
+	 * @param c the command to be removed
+	 */
+	public void removeAnswers(Command c) {
+		synchronized (answers) {
+			answers.remove(c);
+		}		
 	}
 	
-	public boolean move(int x, int y) {
-		return false;
-		
+	/**
+	 * Removes the oldest answer from the list (the one with index 0).
+	 */
+	public void removeOldestAnswer() {
+		synchronized (answers) {
+			answers.remove(0);
+		}	
 	}
-	
-	public boolean logout(int x, int y) {
-		return false;
-		
-	}
-	
-	/** close the socket connection. */
+
+	/** 
+	 * closes the socket connection. 
+	 * */
 	public void shutdown() {
 		try {
 			in.close();

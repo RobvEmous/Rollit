@@ -1,4 +1,4 @@
-package client;
+package game;
 
 import java.awt.Point;
 

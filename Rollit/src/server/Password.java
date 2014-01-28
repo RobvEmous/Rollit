@@ -1,7 +1,5 @@
 package server;
 
-import java.security.SecureRandom;
-
 public class Password {
 	public static final String INITIAL = "password123";
 	private static final String ADMIN_PASS = "verysafe";
@@ -34,10 +32,6 @@ public class Password {
 		if (test.equals(password)) {
 			match = true;
 		}		
-		SecureRandom r = new SecureRandom();
-		byte[] bytes = new byte[128];
-		r.nextBytes(bytes);
-		
 		return match;
 	}
 	

@@ -6,33 +6,37 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Vector;
 
+import clientAndServer.Command;
+
 /**
- * P2 prac wk5. <br>
  * Server. A Thread class that listens to a socket connection on a 
  * specified port. For every socket connection with a Client, a new 
  * ClientHandler thread is started. 
- * @author  Theo Ruys
- * @version 2005.02.21
+ * @author  Rob van Emous
+ * @version v0.3
  */
-public class Server extends Thread {
+public class Server extends Thread implements Observer {
 	private int port;
 	private MessageUI mui;
-	private Collection<ClientHandler> threads;
+	private Collection<ClientCommunicator> clients;
 
-        /** Constructs a new Server object */
+
+    /** Constructs a new Server object */
 	public Server(int portArg, MessageUI muiArg) {
 		port = portArg;
 		mui = muiArg;
-		threads = new ArrayList<ClientHandler>();
+		clients = new ArrayList<ClientCommunicator>();
 	}
 
 	/**
 	 * Listens to a port of this Server if there are any Clients that 
-         * would like to connect. For every new socket connection a new
-         * ClientHandler thread is started that takes care of the further
-         * communication with the Client. 
+     * would like to connect. For every new socket connection a new
+     * ClientHandler thread is started that takes care of the further
+     * communication with the Client. 
 	 */
 	public void run() {
 		ServerSocket socket = null;
@@ -40,9 +44,9 @@ public class Server extends Thread {
 			socket = new ServerSocket(port);
 			while (true) {
 				Socket s = socket.accept();
-				ClientHandler c = new ClientHandler(this, s); 
-				addHandler(c);
-				c.start();				
+				ClientCommunicator c = new ClientCommunicator(this, s); 
+				c.addObserver(this);
+				addHandler(c);				
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -55,6 +59,7 @@ public class Server extends Thread {
 	 * @param msg message that is send
 	 */
 	public synchronized void broadcast(String msg) {
+		//@ TODO
 		mui.addMessage(msg);
 		for (ClientHandler handler : threads) {
 			handler.sendMessage(msg);
@@ -65,8 +70,8 @@ public class Server extends Thread {
 	 * Add a ClientHandler to the collection of ClientHandlers.
 	 * @param handler ClientHandler that will be added
 	 */
-	public void addHandler(ClientHandler handler) {
-		threads.add(handler);
+	public void addHandler(ClientCommunicator handler) {
+		clients.add(handler);
 	}
 
 	/**
@@ -74,7 +79,13 @@ public class Server extends Thread {
 	 * @param handler ClientHandler that will be removed
 	 */
 	public synchronized void removeHandler(ClientHandler handler) {
-		threads.remove(handler);
+		clients.remove(handler);
 	}
 
-} // end of class Server
+	@Override
+	public void update(Observable o, Object arg) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

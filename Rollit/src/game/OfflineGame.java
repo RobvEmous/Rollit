@@ -1,5 +1,6 @@
-package client;
+package game;
 
+import java.awt.Point;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
@@ -11,12 +12,22 @@ import java.util.Scanner;
  * @author Rob van Emous
  * @version 0.1
  */
-public class Game extends Observable {
+public class OfflineGame extends Observable {
+	
+	/**
+	 * The offline game setup menu.
+	 */
+	private OfflineGameSetup setup;
 
     /**
      * The board of the game.
      */
     private Board board;
+    
+    /**
+     * The GUI of the game.
+     */
+    private GameUI gameUI;
 
     /**
      * The number of players of the game (2-4).
@@ -44,53 +55,59 @@ public class Game extends Observable {
     
     private int turnCounter = 0;
     
-    private int time = 500;
+    private int time = 1000;
     
     private String curr = "Current game situation:";
 
     /**
-     * Creates a new Game object.
+     * Creates a new Game.
+     * 
+     * @param thePlayers the players
+     */
+    public OfflineGame(OfflineGameSetup s, GamePlayer[] thePlayers) {
+    	setup = s;
+    	nrOfPlayers = thePlayers.length;
+        board = new Board();
+        players = thePlayers;
+        board.setInitial();
+        current = 0;
+        starter = -1;
+        rand = new Random();
+        gameUI = new GameUI(this);
+        addObserver(gameUI);
+    }
+    
+    /**
+     * Creates a new Game.
+     * 
+     * @param s0 the first player
+     * @param s1 the second player
+     * @param s2 the third player
+     * @param s3 the fourth player
+     */
+    public OfflineGame(GamePlayer s0, GamePlayer s1, GamePlayer s2, GamePlayer s3) {
+    	this(new GamePlayer[]{s0, s1, s2, s3});
+    }
+    
+    /**
+     * Creates a new Game.
+     * 
+     * @param s0 the first player
+     * @param s1 the second player
+     * @param s2 the third player
+     */
+    public OfflineGame(GamePlayer s0, GamePlayer s1, GamePlayer s2) {
+    	this(new GamePlayer[]{s0, s1, s2});
+    }
+    
+    /**
+     * Creates a new Game.
      * 
      * @param s0 the first player
      * @param s1 the second player
      */
-    public Game(GamePlayer s0, GamePlayer s1, GamePlayer s2, GamePlayer s3) {
-    	nrOfPlayers = 4;
-        board = new Board();
-        players = new GamePlayer[nrOfPlayers];
-        players[0] = s0;
-        players[1] = s1;
-        players[2] = s2;
-        players[3] = s3;
-        board.setInitial(players);
-        current = 0;
-        starter = -1;
-        rand = new Random();
-    }
-    
-    public Game(GamePlayer s0, GamePlayer s1, GamePlayer s2) {
-    	nrOfPlayers = 3;
-        board = new Board();
-        players = new GamePlayer[nrOfPlayers];
-        players[0] = s0;
-        players[1] = s1;
-        players[2] = s2;
-        board.setInitial(players);
-        current = 0;
-        starter = -1;
-        rand = new Random();
-    }
-    
-    public Game(GamePlayer s0, GamePlayer s1) {
-    	nrOfPlayers = 2;
-        board = new Board();
-        players = new GamePlayer[nrOfPlayers];
-        players[0] = s0;
-        players[1] = s1;
-        board.setInitial(players);
-        current = 0;
-        starter = -1;
-        rand = new Random();
+    public OfflineGame(GamePlayer s0, GamePlayer s1) {
+    	this(new GamePlayer[]{s0, s1});
     }
 
     /**
@@ -146,7 +163,7 @@ public class Game extends Observable {
     	}
     	current = starter;
     	board.reset();
-    	board.setInitial(players);
+    	board.setInitial();
     	turnCounter = 0;
     }
 
@@ -197,7 +214,7 @@ public class Game extends Observable {
     private void updateScreen() {
     	if (useUI) {
     		setChanged();
-    		notifyObservers(board.getFields());
+    		notifyObservers(board);
   			System.out.println(ballOccurences());
     	} else {
    			System.out.println(
@@ -240,6 +257,45 @@ public class Game extends Observable {
     	return null;
     }
     
+    public GamePlayer getCurrentPlayer() {
+    	return players[current];
+    }
+    
+    public GamePlayer getNextPlayer() {
+    	GamePlayer player = null;
+		try {
+    		player = players[current + 1];
+    	} catch (ArrayIndexOutOfBoundsException e) {
+    		player = players[0];
+    	}
+    	return player;
+    }
+    
+    public GamePlayer getWinner() {
+    	GamePlayer player = null;
+    	Ball winner = board.getWinner();
+    	for (int i = 0; i < players.length; i++) {
+    		if (players[i].getBall().equals(winner)) {
+    			player = players[i];
+    		}
+    	}
+    	return player;
+    }
+    
+    public boolean hasHuman() {
+    	boolean hasHuman = false;
+    	for (int i = 0; i < players.length; i++) {
+    		if (players[i] instanceof HumanPlayer) {
+    			hasHuman = true;
+    		}
+    	}
+    	return hasHuman;
+    }
+    
+    public Point getHint() {
+    	return board.getHint(players[current].getBall());
+    }
+    
     public static void main(String[] args) {
     	GamePlayer s0 = new ComputerPlayer(Ball.RED,new SmartStrategy());
     	GamePlayer s1 = new ComputerPlayer(Ball.BLUE,new SmartStrategy());
@@ -252,16 +308,19 @@ public class Game extends Observable {
     	GamePlayer n3 = new ComputerPlayer(Ball.YELLOW,new NaiveStrategy());
     	
     	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED, true);
-    	
-    	GameUI gui = new GameUI((HumanPlayer) h0);
+    	GamePlayer h1 = new HumanPlayer("René",Ball.BLUE, true);
     	
     	//Game game = new Game(s0, s1);
     	//Game game = new Game(n0, n1);
     	//Game game = new Game(s0, n1, n2, n3);
-    	Game game = new Game(h0, s1,s2,s3);
-    	game.addObserver(gui);
+    	OfflineGame game = new OfflineGame(h0, h1, s2, s3);
     	
 		game.start();
     }
+
+	public void goBack() {
+		gameUI.dispose();
+		setup.returnFromAction();
+	}
 
 }
