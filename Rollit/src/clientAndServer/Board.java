@@ -57,11 +57,9 @@ public class Board {
      * Creates a pre-set board.
      */
     public Board(Ball[][] newFields) {
-        fields = Arrays.copyOf(
-        		newFields, 
-        		newFields.length
-        		);
+        fields = newFields;
         rankMap = createRankMap();
+        otherMoves = getOtherMoves();
     }
     
     /**
@@ -164,7 +162,13 @@ public class Board {
      * Creates a deep copy of this board.
      */
     public Board deepCopy() {
-        return new Board(fields);
+    	Ball[][] newFields = new Ball[X_MAX][Y_MAX];
+        for (int x = 0; x < X_MAX; x++) {
+        	for (int y = 0; y < Y_MAX; y++) {
+        		newFields[x][y] = fields[x][y];
+        	}
+        }
+        return new Board(newFields);
     }
     
     /**
@@ -178,10 +182,6 @@ public class Board {
     	fields[rightUpper.x][rightUpper.y] = Ball.YELLOW;
     	fields[rightLower.x][rightLower.y] = Ball.GREEN;
     	fields[leftLower.x][leftLower.y] = Ball.BLUE;
-    	/*fields[0][0] = Ball.RED;
-    	fields[X_MAX-1][0] = Ball.YELLOW;
-    	fields[X_MAX - 1][Y_MAX - 1] = Ball.GREEN;
-    	fields[0][Y_MAX - 1] = Ball.BLUE;*/
     	otherMoves = getOtherMoves();
     }
     
@@ -217,7 +217,7 @@ public class Board {
     	fields[col][row] = b;
     	otherMoves = getOtherMoves();
     }
-    
+      
     private void setField(int col, int row, Ball b, boolean apply) {
     	if (apply) {
     		applyMove(col, row, b);
