@@ -2,7 +2,6 @@ package clientAndServer;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Random;
 
 /**
@@ -13,8 +12,11 @@ import java.util.Random;
 public class Board {
 
 	/**
-	 * The x-dimension of the board. 
+	 * The x-dimension of the board.
 	 * This <b>must</b> be an even number larger than 4.
+	 */
+	/*@
+	  invariant X_MAX >= 2 && X_MAX % 2 == 0;
 	 */
     public static final int X_MAX = 8;
     
@@ -22,10 +24,16 @@ public class Board {
 	 * The y-dimension of the board. 
 	 * This <b>must</b> be an even number larger than 4.
 	 */
+    /*@
+      invariant Y_MAX >= 2 && Y_MAX % 2 == 0;
+     */
     public static final int Y_MAX = 8;
     
 	/**
 	 * Number of fields on the board. 
+	 */
+	/*@
+	  invariant NR_OF_FIELDS == X_MAX * Y_MAX;
 	 */
     public static final int NR_OF_FIELDS = X_MAX * Y_MAX;
 
@@ -56,6 +64,10 @@ public class Board {
 	/**
      * Creates a pre-set board.
      */
+    /*@
+      requires newFields != null;
+      ensures getFields() == newFields;
+     */
     public Board(Ball[][] newFields) {
         fields = newFields;
         rankMap = createRankMap();
@@ -69,7 +81,7 @@ public class Board {
      * 
      * @return the rank-map
      */
-	private int[][] createRankMap() {
+    private int[][] createRankMap() {
 		int[][] tempRankMap = new int[X_MAX][Y_MAX];
         for (int x = 0; x < X_MAX; x++) {
         	for (int y = 0; y < Y_MAX; y++) {
@@ -136,6 +148,10 @@ public class Board {
      * @param col the field's column
      * @return the rank-map
      */
+	/*@
+	  requires isField(col,row);
+	  ensures \result >= 0;
+	 */
 	public int getRank(int col, int row) {
 		return rankMap[col][row];
 	}
@@ -147,12 +163,19 @@ public class Board {
      * @param p the point of the field
      * @return the rank-map
      */
+	/*@
+	  requires isField(p);
+	  ensures \result >= 0;
+	 */
 	public int getRank(Point p) {
 		return rankMap[p.x][p.y];
 	}
 	
 	/**
 	 * Returns full rank-map.
+	 */
+	/*@
+	  ensures \result != null;
 	 */
 	public int[][] getRankMap() {
 		return rankMap;
@@ -161,6 +184,9 @@ public class Board {
     /**
      * Creates a deep copy of this board.
      */
+	/*@
+	  ensures \result == this;
+	 */
     public Board deepCopy() {
     	Ball[][] newFields = new Ball[X_MAX][Y_MAX];
         for (int x = 0; x < X_MAX; x++) {
@@ -177,6 +203,12 @@ public class Board {
      * players and the ball belonging to each player. 
      * @param balls the balls used by the players
      */
+    /*@
+      ensures getField((X_MAX -1)/2, (Y_MAX -1)/2) == Ball.RED;
+      ensures getField(X_MAX / 2, (Y_MAX - 1) / 2) == Ball.YELLOW; 
+      ensures getField(X_MAX / 2, Y_MAX / 2) == Ball.GREEN; 
+      ensures getField((X_MAX - 1) / 2, Y_MAX / 2) == Ball.BLUE;  
+     */
     public void setInitial() {
     	fields[leftUpper.x][leftUpper.y] = Ball.RED;
     	fields[rightUpper.x][rightUpper.y] = Ball.YELLOW;
@@ -188,6 +220,11 @@ public class Board {
     /**
      * Returns the whole field array.
      */
+    /*@
+      ensures (\forall int x,y; x >= 0 && x < X_MAX && y >= 0 && y < Y_MAX; 
+      			\result[x][y] == getField(x,y));
+      pure
+     */
     public Ball[][] getFields() {
 		return fields;
 	}
@@ -198,6 +235,11 @@ public class Board {
      * @param col the column of the field
      * @param row the row of the field
      * @return the Ball on the field
+     */
+    /*@
+      requires isField(col,row);
+      ensures Ball.BLUE <#= \result && \result <#= Ball.EMPTY;
+      pure;
      */
     public Ball getField(int col, int row) {
         return fields[col][row];
@@ -212,31 +254,29 @@ public class Board {
      * @param col the field's column
      * @param b the Ball to be placed
      */
+    /*@
+      requires isValidMove(b, new Point(col, row));
+      ensures getField(col,row) == b;
+     */
     public void setField(int col, int row, Ball b) {
     	applyMove(col, row, b);
     	fields[col][row] = b;
     	otherMoves = getOtherMoves();
     }
       
-    private void setField(int col, int row, Ball b, boolean apply) {
-    	if (apply) {
-    		applyMove(col, row, b);
-    	}
-    	fields[col][row] = b;
-    }
     
     private void setFields(ArrayList<Point> points, Ball b, boolean apply) {
     	for (Point point : points) {
-	    	if (apply) {
-	    		applyMove(point, b);
-	    	}
-	    	fields[point.x][point.y] = b;
-	    	otherMoves = getOtherMoves();
-    	}	    	
+	    	setField(point, b , apply);
+    	}
+    	otherMoves = getOtherMoves();
     }
     
-    private void applyMove(Point p, Ball b) {
-    	applyMove(p.x, p.y, b);
+    private void setField(Point p, Ball b, boolean apply) {
+    	if (apply) {
+    		applyMove(p.x, p.y, b);
+    	}
+    	fields[p.x][p.y] = b;
     }
     
     private void applyMove(int col, int row, Ball b) {
@@ -301,6 +341,10 @@ public class Board {
      * @param p the point to set the field
      * @param b the Ball to be placed
      */
+    /*@
+      requires isValidMove(b, p);
+      ensures getField(p.x, p.y) == b;
+     */
     public void setField(Point p, Ball b) {
     	setField(p.x, p.y, b);
     }
@@ -309,6 +353,10 @@ public class Board {
      * Returns true if the (row,col) pair refers to a valid field on the board.
      * 
      * @return true if <code>0 <= row < Y_MAX && 0 <= col < X_MAX</code>
+     */
+    /*@
+      ensures \result == (0 <= row && row < Y_MAX && 0 <= col && col < X_MAX);
+      pure;
      */
     public boolean isField(int col, int row) {
         return (0 <= row) && (row < Y_MAX) && (0 <= col) && (col < X_MAX);
@@ -319,12 +367,20 @@ public class Board {
      * 
      * @return true if <code>0 <= p.y < Y_MAX && 0 <= p.x < X_MAX</code>
      */
+    /*@
+      ensures \result == (0 <= p.y && p.y < Y_MAX && 0 <= p.x && p.x < X_MAX);
+      pure;
+     */
     public boolean isField(Point p) {
         return (0 <= p.y) && (p.y < Y_MAX) && (0 <= p.x) && (p.x < X_MAX);
     }
     
     /**
      * Returns a list containing the empty fields or null.
+     */
+    /*@
+      ensures (\forall int x,y; isEmptyField(x,y); \result.contains(new Point(x,y)));
+      pure;
      */
     public ArrayList<Point> getEmptyFields() {
     	ArrayList<Point> emptyFields = new ArrayList<Point>();
@@ -348,6 +404,11 @@ public class Board {
      * @param row the row of the field
      * @return true if the field is empty
      */
+    /*@
+      requires isField(col, row);
+      ensures \result == (getField(col,row) != Ball.EMPTY);
+      pure;
+     */
     public boolean isEmptyField(int col, int row) {
         return fields[col][row].equals(Ball.EMPTY);
     }
@@ -358,6 +419,11 @@ public class Board {
      * @param p the point of the field
      * @return true if the field is empty
      */
+    /*@
+      requires isField(p);
+      ensures \result == (getField(p.x,p.y) == Ball.EMPTY);
+      pure;
+     */
     public boolean isEmptyField(Point p) {
         return fields[p.x][p.y].equals(Ball.EMPTY);
     }
@@ -367,10 +433,13 @@ public class Board {
      * 
      * @param col the column of the field
      * @param row the row of the field
-     * @return true if the field is an edge-field
+     * @return true if the field is on the edge of the board
      */
-	public boolean isEdgeField(int col, int row) {
-    	return col == 0 || row == 0 || col == X_MAX || row == Y_MAX;
+	/*@
+	  ensures \result == (col == 0 || row == 0 || col == X_MAX - 1 || row == Y_MAX - 1);
+	 */
+    public boolean isEdgeField(int col, int row) {
+    	return col == 0 || row == 0 || col == X_MAX - 1 || row == Y_MAX - 1;
     }
 	
     
@@ -380,7 +449,11 @@ public class Board {
      * @param p the point of the field
      * @return true if the field is an edge-field
      */
-	public boolean isEdgeField(Point p) {
+	/*@
+	  requires p != null;
+	  ensures \result == (p.x == 0 || p.y == 0 || p.x == X_MAX - 1 || p.y == Y_MAX - 1);
+	 */
+    public boolean isEdgeField(Point p) {
     	return isEdgeField(p.x, p.y);
     }
 
@@ -389,22 +462,28 @@ public class Board {
      * 
      * @return true if all fields are occupied
      */
+    /*@
+      ensures \result == (getEmptyFields() == null);
+     */
     public boolean isFull() {
-        for (int x = 0; x < X_MAX; x++) {
+        /*for (int x = 0; x < X_MAX; x++) {
         	for (int y = 0; y < Y_MAX; y++) {
         		if (isEmptyField(x,y)) {
         			return false;
         		}
             }
         }
-        return true;
+        return true;*/
+    	return (getEmptyFields() == null);
     }  
 
     /**
-     * Returns true if the game is over. The game is over when there are 
-     * no possible moves or the whole board is full.
+     * Returns true if the game is over. The game is over when the whole board is full.
      * 
      * @return true if the game is over
+     */
+    /*@
+      ensures \result == (getEmptyFields() == null);
      */
     public boolean gameOver() {
         return isFull();
@@ -416,17 +495,31 @@ public class Board {
      * @param ball the ball of interest
      * @return true if the Ball can perform at least one move.
      */
-	public boolean isValidMove(Ball ball, Point move) {	
+	/*@
+	  requires ball != null && move != null;
+	  ensures \result == (getMoves(ball).contains(move));
+	  pure;
+	 */
+    public boolean isValidMove(Ball ball, Point move) {	
 		return getMoves(ball).contains(move);
 	}
-	 /**
+	
+    /**
 	  * Returns a random point on the board that is a valid move for the ball of interest.
 	  * 
 	  * @param ball the ball of interest.
 	  */
-	public Point getHint(Ball ball) {
+	/*@
+	  requires ball != null;
+	  ensures isValidMove(ball, \result);
+	 */
+    public Point getHint(Ball ball) {
 		ArrayList<Point> moves = getMoves(ball);
-		return moves.get(rand.nextInt(moves.size()));
+		Point move = null;
+		if (moves != null) {
+			move = moves.get(rand.nextInt(moves.size()));
+		}
+		return move;
 	}
 
     /**
@@ -435,11 +528,25 @@ public class Board {
      * @param ball the ball of interest
      * @return true if the Ball can perform at least one move.
      */
-	public boolean hasMoves(Ball b) {		
+	/*@
+	  requires b != null;
+	  ensures \result == (getMoves(b) != null);
+	 */
+    public boolean hasMoves(Ball b) {		
 		return getMoves(b) != null;
 	}
 	
-	
+	/**
+	 * Returns an ArrayList of all points that are a valid move for the ball of interest.
+	 * 
+	 * @param b the ball of interest.
+	 */
+    /*@
+	  requires b != null;
+	  ensures (\forall Point p; isField(p) && \result.contains(p); 
+	  				nextToOccupiedField(p) == true);
+	  pure;
+	 */
 	public ArrayList<Point> getMoves(Ball b) {
 		ArrayList<Point> moves = getNormalMoves(b);
 		if (moves == null) {
@@ -461,6 +568,22 @@ public class Board {
     	return moves;
     }
     
+    /**
+     * Determines whether the specified field is adjacent to an occupied field.
+     * An occupied field being a field of which the ball has neither the value EMPTY nor
+     * the value HINT.
+     * 
+     * @param col the column of the field
+     * @param row the row of the field
+     * @return true if the field is next to an occupied one
+     */
+    /*@
+      requires isField(col, row);
+	  ensures (\exists int x,y; isField(x,y) && !isEmptyField(x,y) && 
+	    					(Math.abs(col - x) < 2) && (Math.abs(row - y) < 2);
+	    					\result == true);
+	  pure;
+     */
     public boolean nextToOccupiedField(int col, int row) {
         for (int x = 0; x < X_MAX; x++) {
         	for (int y = 0; y < Y_MAX; y++) {
@@ -474,17 +597,24 @@ public class Board {
         return false;
     }
     
-    public boolean nextToOccupiedField(Point p) {
-    	return nextToOccupiedField(p.x, p.y);
-    }
-    
-	/**
+    /**
 	 * Determines the moves the Ball can perform.
 	 * 
 	 * @param b the ball of interest
 	 * @return the moves the Ball can perform or null if the ball can't 
 	 * perform any moves
-	 */
+     */
+    /*@
+      requires isField(p);
+	  ensures (\exists Point q; isField(q) && !isEmptyField(q) && 
+	    					(Math.abs(p.x - q.x) < 2) && (Math.abs(p.y - q.y) < 2);
+	    					\result == true);
+	  pure;
+     */
+    public boolean nextToOccupiedField(Point p) {
+    	return nextToOccupiedField(p.x, p.y);
+    }
+    
 	private ArrayList<Point> getNormalMoves(Ball b) {
 		ArrayList<Point> m = new ArrayList<Point>();
 		addAllMoves(b, m, "h");
@@ -629,6 +759,12 @@ public class Board {
      * @param b the Ball of interest
      * @return true if the Ball has won
      */
+	/*@
+	  requires b != null;
+	  ensures (\exists Ball ball; isPlayableBall(ball) && 
+	  				countInstancesOf(b) <= countInstancesOf(ball); \result == false);
+	  pure;
+	 */
     public boolean isWinner(Ball b) {
     	boolean isWinner = true;
     	int best = countInstancesOf(b);
@@ -648,6 +784,13 @@ public class Board {
      * @param b the ball of interest
      * @return number of <code>b</code> on the Board
      */
+    /*@
+      requires b != null;
+      ensures (\exists int counter; 
+      				(\forall int x,y; isField(x,y) && getField(x,y) == b; 
+      				counter == \old(counter) + 1); \result == counter);
+      pure;
+     */
     public int countInstancesOf(Ball b) {
     	int counter = 0;
         for (int x = 0; x < X_MAX; x++) {
@@ -666,6 +809,10 @@ public class Board {
      * others.
      * 
      * @return true if the board has a winner
+     */
+    /*@
+      ensures (\exists Ball b; isPlayableBall(b) && isWinner(b); \result == true);
+      pure;
      */
     public boolean hasWinner() {
     	boolean hasWinner = false;
@@ -691,6 +838,12 @@ public class Board {
      * 
      * @return the winning Ball or null
      */
+    /*@
+      requires hasWinner();
+      ensures (\exists Ball b; isPlayableBall(b) && 
+      			!(\exists Ball other; isPlayableBall(other) && 
+      				countInstancesOf(b) <= countInstancesOf(other)); \result == b);
+     */
     public Ball getWinner() {
     	Ball winner = null;
     	int best = 0;
@@ -714,6 +867,11 @@ public class Board {
      * @param b the ball of interest
      * @return true if the Ball is not Ball.EMPTY or Ball.HINT
      */
+    /*@
+      requires b != null;
+      ensures \result == !(b == Ball.EMPTY || b == Ball.HINT);
+      pure;
+     */
     public boolean isPlayableBall(Ball b) {
     	return !(b.equals(Ball.EMPTY) || b.equals(Ball.HINT));
     }
@@ -723,6 +881,10 @@ public class Board {
      * 
      * @param b the ball of interest
      * @return the list of balls
+     */
+    /*@
+      requires b != null;
+      ensures (\forall Ball ball; isPlayableBall(ball) && ball != b; \result.contains(ball));
      */
     public ArrayList<Ball> getPlayableBallsExcept(Ball b) {
     	ArrayList<Ball> balls = new ArrayList<Ball>();
@@ -736,7 +898,10 @@ public class Board {
     
     /**
      * Empties all fields of this board.
-     */    
+     */   
+    /*@
+      ensures (\forall Point p; isField(p); getField(p.x, p.y) == Ball.EMPTY); 
+     */
     public void reset() {
         for (int x = 0; x < X_MAX; x++) {
         	for (int y = 0; y < Y_MAX; y++) {
@@ -749,6 +914,9 @@ public class Board {
      * Returns a String representation of this board.
      * 
      * @return the game situation as String
+     */
+    /*@
+      ensures \result != null;
      */
     public String toString() {  
     	String boardPrint = getXes() + "\n";

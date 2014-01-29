@@ -15,12 +15,12 @@ public enum Ball {
     BLUE, RED, GREEN, YELLOW, HINT, EMPTY;
     
 	/*@
-	   ensures this == Mark.BLUE ==> \result == Mark.RED;
-	   ensures this == Mark.RED ==> \result == Mark.GREEN;
-	   ensures this == Mark.GREEN ==> \result == Mark.YELLOW;
-	   ensures this == Mark.YELLOW ==> \result == Mark.BLUE;
-	   ensures this == Mark.EMPTY ==> \result == Mark.EMPTY;
-	   ensures this == Mark.HINT ==> \result == Mark.HINT;
+	   ensures this == Ball.BLUE ==> \result == Ball.RED;
+	   ensures this == Ball.RED ==> \result == Ball.GREEN;
+	   ensures this == Ball.GREEN ==> \result == Ball.YELLOW;
+	   ensures this == Ball.YELLOW ==> \result == Ball.BLUE;
+	   ensures this == Ball.EMPTY ==> \result == Ball.EMPTY;
+	   ensures this == Ball.HINT ==> \result == Ball.HINT;
 	 */
 	/**
 	 * Returns the next mark.
@@ -45,12 +45,12 @@ public enum Ball {
 	 }
 	 
 	 /*@
-	   ensures this == Mark.BLUE ==> \result.equals("B");
-	   ensures this == Mark.RED ==> \result.equals("R");
-	   ensures this == Mark.GREEN ==> \result.equals("G");
-	   ensures this == Mark.YELLOW ==> \result.equals("Y");
-	   ensures this == Mark.EMPTY ==> \result.equals("E");
-	   ensures this == Mark.HINT ==> \result.equals("H");
+	   ensures this == Ball.BLUE ==> \result.equals("B");
+	   ensures this == Ball.RED ==> \result.equals("R");
+	   ensures this == Ball.GREEN ==> \result.equals("G");
+	   ensures this == Ball.YELLOW ==> \result.equals("Y");
+	   ensures this == Ball.EMPTY ==> \result.equals("E");
+	   ensures this == Ball.HINT ==> \result.equals("H");
 	 */
 	 /**
 	  * Returns a representation of the ball in the form of one character. 

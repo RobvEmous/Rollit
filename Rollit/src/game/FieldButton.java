@@ -12,8 +12,13 @@ public class FieldButton extends JButton {
 	private Color bgColor;
 	
 	public FieldButton() {
+		this(false);
+	}
+	
+	public FieldButton(boolean paintBorder) {
 		color = Color.GRAY;
 		bgColor = Color.BLACK;
+		setBorderPainted(paintBorder);
 	}
 	
 	public void setBackgroundColor(Color c) {
