@@ -44,14 +44,19 @@ public class OfflineGame extends Observable {
     private GamePlayer[] players;
 
     /**
+     * Whether this game has a human or not
+     */
+    private boolean hasHuman;
+    
+    /**
      * Index of the current player.
      */
-    private int current;
+    private int current = 0;
     
     /**
      * Index of the player which can make the first move
      */
-    private int starter;
+    private int starter = -1;
     
     private Random rand;
     
@@ -59,7 +64,7 @@ public class OfflineGame extends Observable {
     
     private int turnCounter = 0;
     
-    private int time = 1000;
+    private int time = 0;
     
     private String curr = "Current game situation:";
 
@@ -70,48 +75,20 @@ public class OfflineGame extends Observable {
      */
     public OfflineGame(OfflineGameSetup s, GamePlayer[] thePlayers) {
     	setup = s;
-    	nrOfPlayers = thePlayers.length;
-        board = new Board();
-        players = thePlayers;
-        board.setInitial();
-        current = 0;
-        starter = -1;
+    	
+    	board = new Board();
+    	board.setInitial();
+    	
+    	players = thePlayers;
+    	nrOfPlayers = thePlayers.length;   
+    	
         rand = new Random();
-        gameUI = new GameUI(this);
-        addObserver(gameUI);
-    }
-    
-    /**
-     * Creates a new Game.
-     * 
-     * @param s0 the first player
-     * @param s1 the second player
-     * @param s2 the third player
-     * @param s3 the fourth player
-     */
-    public OfflineGame(OfflineGameSetup s, GamePlayer s0, GamePlayer s1, GamePlayer s2, GamePlayer s3) {
-    	this(s, new GamePlayer[]{s0, s1, s2, s3});
-    }
-    
-    /**
-     * Creates a new Game.
-     * 
-     * @param s0 the first player
-     * @param s1 the second player
-     * @param s2 the third player
-     */
-    public OfflineGame(OfflineGameSetup s, GamePlayer s0, GamePlayer s1, GamePlayer s2) {
-    	this(s, new GamePlayer[]{s0, s1, s2});
-    }
-    
-    /**
-     * Creates a new Game.
-     * 
-     * @param s0 the first player
-     * @param s1 the second player
-     */
-    public OfflineGame(OfflineGameSetup s, GamePlayer s0, GamePlayer s1) {
-    	this(s, new GamePlayer[]{s0, s1});
+        
+        if (useUI) {
+        	hasHuman = initHasHuman();
+        	gameUI = new GameUI(this);
+        }
+        
     }
 
     /**
@@ -124,8 +101,13 @@ public class OfflineGame extends Observable {
         while (!stop) {
             reset();
             play();
-            stop = !readBoolean("\n> Play another time? (y/n)?", "y", "n");
+            if (useUI) {
+            	stop = gameUI.readQuestionPopup("Game Over", "Play again?");
+            } else {
+            	stop = !readBoolean("\n> Play another time? (y/n)?", "y", "n");
+            }
         }
+        
     }
 
     /**
@@ -179,9 +161,11 @@ public class OfflineGame extends Observable {
      * After each move, the changed game situation is printed.
      */
     private void play() {
-    	updateScreen();
         while (!board.gameOver()) {
-       		hasMoves(players[current]);      		
+        	updateScreen();   
+        	if (!useUI) {
+        		hasTurn(players[current]);   
+        	}  		   		
        		long endTime = System.currentTimeMillis() + time;
        		players[current].makeMove(board);
        		if (System.currentTimeMillis() < endTime) {
@@ -190,8 +174,7 @@ public class OfflineGame extends Observable {
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-       		}
-        	updateScreen();                 
+       		}    	              
         	nextCurrent();
         }
         updateScreen();
@@ -199,7 +182,7 @@ public class OfflineGame extends Observable {
     }
 
 
-    private void hasMoves(GamePlayer player) {
+    private void hasTurn(GamePlayer player) {
    		System.out.println(player.getName() + "(" + player.getBall() + ") has the turn.");	
 	}
     
@@ -217,9 +200,7 @@ public class OfflineGame extends Observable {
      */
     private void updateScreen() {
     	if (useUI) {
-    		setChanged();
-    		notifyObservers(board);
-  			System.out.println(ballOccurences());
+    		gameUI.update(board);
     	} else {
    			System.out.println(
     				"\n" + curr + "\n\n" + board.toString());
@@ -242,14 +223,19 @@ public class OfflineGame extends Observable {
      * Prints the result of the last game. <br>
      */
     private void printResult() {
-        if (board.hasWinner()) {
-            GamePlayer winner = getPlayer(board.getWinner());
-            System.out.println("Speler " + winner.getName() + " ("
-                    + winner.getBall().toString() + ") has won!");      
-        } else {
-            System.out.println("Draw. There is no winner!");
-        }
-        System.out.println("This game took: " + turnCounter + " turns.");
+    	if (useUI) {
+    		gameUI.gameOver(board);
+    	} else {
+            if (board.hasWinner()) {
+                GamePlayer winner = getPlayer(board.getWinner());
+                System.out.println("Speler " + winner.getName() + " ("
+                        + winner.getBall().toString() + ") has won!");      
+            } else {
+                System.out.println("Draw. There is no winner!");
+            }
+            System.out.println("This game took: " + turnCounter + " turns.");
+    	}
+
     }
     
     private GamePlayer getPlayer(Ball b) {
@@ -287,6 +273,10 @@ public class OfflineGame extends Observable {
     }
     
     public boolean hasHuman() {
+    	return hasHuman;
+    }
+    
+    private boolean initHasHuman() {
     	boolean hasHuman = false;
     	for (int i = 0; i < players.length; i++) {
     		if (players[i] instanceof HumanPlayer) {
@@ -300,22 +290,6 @@ public class OfflineGame extends Observable {
     	return board.getHint(players[current].getBall());
     }
     
-    public static void main(String[] args) {
-    	GamePlayer s0 = new ComputerPlayer(Ball.RED,new SmartStrategy());
-    	GamePlayer s1 = new ComputerPlayer(Ball.BLUE,new SmartStrategy());
-    	GamePlayer s2 = new ComputerPlayer(Ball.GREEN,new SmartStrategy());
-    	GamePlayer s3 = new ComputerPlayer(Ball.YELLOW,new SmartStrategy());
-    	
-    	GamePlayer n0 = new ComputerPlayer(Ball.RED,new NaiveStrategy());
-    	GamePlayer n1 = new ComputerPlayer(Ball.BLUE,new NaiveStrategy());
-    	GamePlayer n2 = new ComputerPlayer(Ball.GREEN,new NaiveStrategy());
-    	GamePlayer n3 = new ComputerPlayer(Ball.YELLOW,new NaiveStrategy());
-    	
-    	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED, true);
-    	GamePlayer h1 = new HumanPlayer("René",Ball.BLUE, true);
-
-    }
-
 	public void goBack() {
 		gameUI.dispose();
 		setup.returnFromAction();

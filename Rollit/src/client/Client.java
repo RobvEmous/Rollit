@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import clientAndServer.Command;
+import clientAndServer.Commands;
+import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 import exceptions.ServerNotFoundException;
 
@@ -29,9 +31,6 @@ public class Client extends Thread {
 	private BufferedWriter out;
 	private ArrayList<Command> commands;
 	private ArrayList<Command> answers;
-	private static final int MAX_SIZE = 50;
-	public static final String ACKNOWLEDGED = "Ack";
-	public static final int PORT = 8080;
 
 	/**
 	 * Constructs a Client-object and tries to make a socket connection
@@ -51,18 +50,6 @@ public class Client extends Thread {
 		
 	}
 	
-	public Client(String name, int port) throws IOException {
-		this(name, InetAddress.getLocalHost(), port);
-	}
-	
-	public Client(String name, InetAddress host) throws IOException {
-		this(name, host, PORT);
-	}
-	
-	public Client(String name) throws IOException {
-		this(name, PORT);
-	}
-
 	/** returns the client name */
 	public String getClientName() {
 		return clientName;
@@ -75,19 +62,19 @@ public class Client extends Thread {
 		try {
 			while (true) {
 				Command c = waitForCommand();
-				if (c.getId().contains(ACKNOWLEDGED)) {
+				if (c.getId().contains(Commands.COM_ACK)) {
 					synchronized (answers) {
 						String id = c.getId();
-						c.setId(id.substring(0, id.length() - ACKNOWLEDGED.length()));
+						c.setId(id.substring(0, id.length() - Commands.COM_ACK.length()));
 						answers.add(c);
-						if (answers.size() > MAX_SIZE) {
+						if (answers.size() > GlobalSettings.MAX_SIZE) {
 							removeOldestAnswer();
 						}
 					}
 				} else {
 					synchronized (commands) {
 						commands.add(c);
-						if (commands.size() > MAX_SIZE) {
+						if (commands.size() > GlobalSettings.MAX_SIZE) {
 							removeOldestCommand();
 						}
 					}

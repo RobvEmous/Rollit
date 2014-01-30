@@ -1,10 +1,16 @@
 package server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
 import java.util.Scanner;
+
+import clientAndServer.Ball;
+import clientAndServer.Board;
+import exceptions.ClientTooSlowException;
+import exceptions.ProtecolNotFollowedException;
 
 /**
  * Class for maintaining the Rollit game.
@@ -20,22 +26,22 @@ public class ServerGame extends Observable {
     private Board board;
 
     /**
-     * The number of players of the game (2-4).
+     * The number of GamePlayers of the game (2-4).
      */
-    private int nrOfPlayers = 0;
+    private int nrOfGamePlayers = 0;
     
     /**
-     * The 2-4 players of the game.
+     * The 2-4 GamePlayers of the game.
      */
-    private Player[] players;
+    private ArrayList<GamePlayer> gamePlayers;
 
     /**
-     * Index of the current player.
+     * Index of the current GamePlayer.
      */
     private int current;
     
     /**
-     * Index of the player which can make the first move
+     * Index of the GamePlayer which can make the first move
      */
     private int starter;
     
@@ -45,75 +51,56 @@ public class ServerGame extends Observable {
     
     private int turnCounter = 0;
     
-    private int time = 0;
+    private int thinkTime;
     
     private String curr = "Current game situation:";
 
-    /**
-     * Creates a new Game object.
-     * 
-     * @param s0 the first player
-     * @param s1 the second player
-     */
-    
-    public ServerGame(ArrayList<Player> thePlayers) {
-    	nrOfPlayers = thePlayers.size();
+	/**
+	 * Creates a new Game object.
+	 *  
+	 * @param theGamePlayers 
+	 * @param thinkTime
+	 */
+    public ServerGame(ArrayList<GamePlayer> gamePlayers, int thinkTime) {
+    	this.gamePlayers = gamePlayers;
+    	this.thinkTime = thinkTime;
+    	nrOfGamePlayers = gamePlayers.size();    
+        
         board = new Board();
-        players = (Player[]) thePlayers.toArray();
         board.setInitial();
+        
         current = 0;
         starter = -1;
+        
         rand = new Random();
     }
 
     /**
      * Starts the Rollit game. <br>
-     * Asks after each ended game if the user want to continue. Continues until
-     * the user does not want to play anymore.
      */
     public void start() {
-        boolean stop = false;
-        while (!stop) {
-            reset();
-            play();
-            stop = !readBoolean("\n> Play another time? (y/n)?", "y", "n");
-        }
+    	Thread play = new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				play();
+			}
+		});
+    	play.start();
     }
 
-    /**
-     * Prints a question which can be answered by yes (true) or no 
-     * (false). After prompting the question on standard out, this method 
-     * reads a String from standard in and compares it to the parameters 
-     * for yes and no. If the user inputs a different value, the prompt is
-     * repeated and te method reads input again.
-     * 
-     * @parom prompt the question to print
-     * @param yes the String corresponding to a yes answer
-     * @param no the String corresponding to a no answer
-     * @return true is the yes answer is typed, false if the no answer is typed
-     */
-    private boolean readBoolean(String prompt, String yes, String no) {
-        String answer;
-        do {
-            System.out.print(prompt);
-            Scanner in = new Scanner(System.in);
-            answer = in.hasNextLine() ? in.nextLine() : null;
-        } while (answer == null || (!answer.equals(yes) && !answer.equals(no)));
-        return answer.equals(yes);
-    }
 
     /**
      * Resets the game. <br>
-     * The board is emptied and a random player becomes the current 
-     * player.
+     * The board is emptied and a random GamePlayer becomes the current 
+     * GamePlayer.
      */
-    private void reset() {
+    private void set() {
     	if (starter == -1) {
-    		starter = rand.nextInt(nrOfPlayers);
+    		starter = rand.nextInt(nrOfGamePlayers);
     	} else {
-    		int tempStarter = rand.nextInt(nrOfPlayers);
+    		int tempStarter = rand.nextInt(nrOfGamePlayers);
     		while (tempStarter == starter) {
-    			tempStarter = rand.nextInt(nrOfPlayers);
+    			tempStarter = rand.nextInt(nrOfGamePlayers);
     		}
     		starter = tempStarter;
     	}
@@ -122,28 +109,33 @@ public class ServerGame extends Observable {
     	board.setInitial();
     	turnCounter = 0;
     }
+    
+    private void removePlayer(GamePlayer player) {
+    	gamePlayers.remove(player);
+    	nrOfGamePlayers--;
+    }
 
     /**
      * Plays the Rollit game. <br>
      * First the initial board is shown (the four center balls have
-     * already been set).<br> Then the game is played until one player has
-     * won or it is a draw. Players can make a move one after the other. 
+     * already been set).<br> Then the game is played until one GamePlayer has
+     * won or it is a draw. GamePlayers can make a move one after the other. 
      * After each move, the changed game situation is printed.
      */
     private void play() {
     	updateScreen();
-        while (!board.gameOver()) {
-       		hasMoves(players[current]);      		
-       		long endTime = System.currentTimeMillis() + time;
-       		players[current].makeMove(board);
-       		if (System.currentTimeMillis() < endTime) {
-       			try {
-					Thread.sleep(endTime - System.currentTimeMillis());
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-       		}
-        	updateScreen();                 
+        while (!board.gameOver()) {    		
+       		try {
+				gamePlayers.get(current).determineMove(board);
+			} catch (ClientTooSlowException e) {
+				//TODO send: too
+				e.printStackTrace();
+			} catch (ProtecolNotFollowedException | IOException e ) {
+				removePlayer(gamePlayers.get(current));
+				informOtherPlayers();
+				e.printStackTrace();
+			}
+        	updateScreen();             
         	nextCurrent();
         }
         updateScreen();
@@ -151,12 +143,17 @@ public class ServerGame extends Observable {
     }
 
 
-    private void hasMoves(GamePlayer player) {
-   		System.out.println(player.getName() + "(" + player.getBall() + ") has the turn.");	
+    private void informOtherPlayers() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void hasMoves(GamePlayer GamePlayer) {
+   		System.out.println(GamePlayer.getName() + "(" + GamePlayer.getBall() + ") has the turn.");	
 	}
     
 	private void nextCurrent() {
-		if (current < players.length - 1) {
+		if (current < GamePlayers.length - 1) {
 			current++;
 		} else {
 			current = 0;
@@ -181,10 +178,10 @@ public class ServerGame extends Observable {
     
     private String ballOccurences() {
     	String text = "";
-    	for (int i = 0; i < nrOfPlayers; i++) {
-    		text += players[i].getName() + "(" 
-    				+ players[i].getBall() + ") = " 
-    				+ board.countInstancesOf(players[i].getBall())
+    	for (int i = 0; i < nrOfGamePlayers; i++) {
+    		text += GamePlayers[i].getName() + "(" 
+    				+ GamePlayers[i].getBall() + ") = " 
+    				+ board.countInstancesOf(GamePlayers[i].getBall())
     				+ "\n";
     	}
 		return text;
@@ -195,7 +192,7 @@ public class ServerGame extends Observable {
      */
     private void printResult() {
         if (board.hasWinner()) {
-            GamePlayer winner = getPlayer(board.getWinner());
+            GamePlayer winner = getGamePlayer(board.getWinner());
             System.out.println("Speler " + winner.getName() + " ("
                     + winner.getBall().toString() + ") has won!");      
         } else {
@@ -204,37 +201,17 @@ public class ServerGame extends Observable {
         System.out.println("This game took: " + turnCounter + " turns.");
     }
     
-    private GamePlayer getPlayer(Ball b) {
-    	for (int i = 0; i < nrOfPlayers; i++) {
-    		if (players[i].getBall().equals(b)) {
-    			return players[i];
+    private GamePlayer getGamePlayer(Ball b) {
+    	for (int i = 0; i < nrOfGamePlayers; i++) {
+    		if (GamePlayers[i].getBall().equals(b)) {
+    			return GamePlayers[i];
     		}
     	}
     	return null;
     }
     
     public static void main(String[] args) {
-    	GamePlayer s0 = new ComputerPlayer(Ball.RED,new SmartStrategy());
-    	GamePlayer s1 = new ComputerPlayer(Ball.BLUE,new SmartStrategy());
-    	GamePlayer s2 = new ComputerPlayer(Ball.GREEN,new SmartStrategy());
-    	GamePlayer s3 = new ComputerPlayer(Ball.YELLOW,new SmartStrategy());
-    	
-    	GamePlayer n0 = new ComputerPlayer(Ball.RED,new NaiveStrategy());
-    	GamePlayer n1 = new ComputerPlayer(Ball.BLUE,new NaiveStrategy());
-    	GamePlayer n2 = new ComputerPlayer(Ball.GREEN,new NaiveStrategy());
-    	GamePlayer n3 = new ComputerPlayer(Ball.YELLOW,new NaiveStrategy());
-    	
-    	GamePlayer h0 = new HumanPlayer("Rob",Ball.RED, true);
-    	
-    	GameUI gui = new GameUI((HumanPlayer) h0);
-    	
-    	//Game game = new Game(s0, s1);
-    	//Game game = new Game(n0, n1);
-    	//Game game = new Game(s0, n1, n2, n3);
-    	ServerGame game = new ServerGame(s0, s1, s2, s3);
-    	game.addObserver(gui);
-    	
-		game.start();
+
     }
 
 }

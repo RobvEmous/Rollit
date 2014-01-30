@@ -44,7 +44,7 @@ import clientAndServer.Tools;
  * @author René Nijhuis
  * @version 0.6
  */
-public class GameUI extends JFrame implements Observer, PopupUI {
+public class GameUI extends JFrame implements ActionListener, PopupUI {
 	private static final long serialVersionUID = 5844574958336659575L;
 	
 	private Dimension windowSize = new Dimension(800,600);
@@ -63,6 +63,12 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	private JPanel ballCountPanel;
 	private JPanel fieldPanel;
 	
+	
+	private JMenuItem hintItem;
+	private JMenuItem quitItem;
+	private JMenuItem fullScreenItem;
+	
+	
 	private FieldButton[][] field;
 	
 	private JTextField stateField;
@@ -75,7 +81,6 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	private JLabel ballCountGreenLabel;
 	
 	private FieldButton oldHint = null;
-	private boolean isFirstScreenUpdate = true;
 
 	private Color backgroundColor = Color.BLACK;
 	private Color foregroundColor = Color.WHITE;
@@ -87,24 +92,10 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	private Cursor greenCursor;
 	private Cursor idleCursor;
 	
-	public GameUI() {
-		this(false,null);
-	}
-	
-	public GameUI(boolean online) {
-		this(online,null);
-	}
-	
-	public GameUI(OfflineGame g) {
-		this(false, g);
-	}
-	
-	public GameUI(boolean online, OfflineGame g){
+	public GameUI(OfflineGame g){
 		super("Rolit");
-		onlineGame = online;
 		game = g;
-		initialize();
-		
+		initialize();	
 	}
 	
 	/**
@@ -124,7 +115,7 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		});
 		
 		fullPanel = new JPanel(new GridBagLayout());
-		fullPanel.setSize((int) (getWidth() - 50), (int) (getHeight() -50));
+		//fullPanel.setSize((int) (getWidth() - 50), (int) (getHeight() -50));
 		fullPanel.setBackground(backgroundColor);
 		
 		add(fullPanel);
@@ -139,48 +130,30 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	
 	private void createMenu() {
 		JMenuBar menuBar = new JMenuBar();
-		JMenu gameMenu = new JMenu("Game");
-		JMenuItem hintItem = new JMenuItem("Hint");
-		hintItem.setToolTipText("A random field you can use will be highlighted");
-		hintItem.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						showHint();
-					}					
-				});
-		gameMenu.add(hintItem);
-		JMenuItem quitItem = new JMenuItem("Quit Game");
-		quitItem.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						close();
-					}					
-				});
-		gameMenu.add(quitItem);
-		menuBar.add(gameMenu);
-		JMenu optionsMenu = new JMenu("Options");
-		JMenuItem fullScreenItem = new JMenuItem("Full Screen");
-		fullScreenItem.addActionListener(
-				new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						if (getWidth() >= screenSize.getWidth() || 
-								getHeight() >= screenSize.getHeight()) {
-							setSize(oldSize);
-							setLocation(Tools.getCenterLocation(screenSize, getSize()));
-						} else {
-							oldSize = getSize();
-							setBounds(-10, -30, (int) screenSize.getWidth() + 20,
-									(int) screenSize.getHeight() + 50);
 		
-						}
-					}
-					
-				});
+		// create and set up game menu		
+		JMenu gameMenu = new JMenu("Game");
+		
+		hintItem = new JMenuItem("Hint");
+		hintItem.setToolTipText("A random field you can use will be highlighted");
+		hintItem.addActionListener(this);
+		gameMenu.add(hintItem);
+		
+		quitItem = new JMenuItem("Quit Game");
+		quitItem.setToolTipText("This will stop the game instantly (same as pressing close)");
+		quitItem.addActionListener(this);
+		gameMenu.add(quitItem);
+		
+		menuBar.add(gameMenu);
+		
+		// create and set up options menu
+		JMenu optionsMenu = new JMenu("Options");
+		fullScreenItem = new JMenuItem("Full Screen");
+		fullScreenItem.addActionListener(this);
 		optionsMenu.add(fullScreenItem);
+		
 		menuBar.add(optionsMenu);
+		
 		setJMenuBar(menuBar);
 	}
 
@@ -378,7 +351,7 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	 * size.
 	 */
 	private void createField() {
-		GridLayout fieldLayout = new GridLayout(Board.X_MAX, Board.Y_MAX);
+		GridLayout fieldLayout = new GridLayout(Board.Y_MAX, Board.X_MAX);
 		fieldPanel = new JPanel(fieldLayout);
 		GridBagConstraints fieldPanelC = new GridBagConstraints(0, 0, 4, 1, 1D, 1D,
 				GridBagConstraints.LINE_START, GridBagConstraints.BOTH, inset, 0, 0);
@@ -414,7 +387,7 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 	}
 
 	/**
-	 * When this method is called is goes through the array field to see which button matches 
+	 * When this method is called it goes through the array field to see which button matches 
 	 * the argument. If it finds one that matches the argument it then disables this button.
 	 * @param pressedButton The button for which to find a match within the array field.
 	 */
@@ -430,64 +403,69 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		}
 	}
 	
-	@Override
-	public void update(Observable o, Object arg) {
+	public void update(Board board) {
 		oldHint = null;
-		Board board = ((Board) arg).deepCopy();
-		OfflineGame g = (OfflineGame) o;
+		activateBoard();
 		for (int y = 0; y < Board.Y_MAX; y++) {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				Ball ball = board.getField(x, y);
-				field[y][x].setColor(ball.getColor());
-				field[y][x].repaint();
+				if (!field[y][x].getColor().equals(ball.getColor())) {
+					field[y][x].setColor(ball.getColor());
+					field[y][x].repaint();
+				}
 			}
 		}
-		if (board.gameOver()) {
-			if (board.hasWinner()) {
-				stateField.setText(g.getWinner().getName() + " has won the game!");
-			} else {
-				stateField.setText("It's a draw.");
-			}
-		} else {
-			if (isFirstScreenUpdate) {
-				stateField.setText("It is " + g.getCurrentPlayer().getName() + "'s turn");
-			} else {
-				stateField.setText("It is " + g.getNextPlayer().getName()+ "'s turn.");
-			}
-		}
-		GamePlayer player = null;
-		if (isFirstScreenUpdate) {
-			player = g.getCurrentPlayer();
-		} else {
-			player = g.getNextPlayer();
-		}
-		if (player instanceof HumanPlayer) {
-			switch (player.getBall()) {
+		GamePlayer currPlayer = game.getCurrentPlayer();
+		stateField.setText(currPlayer.getName() + "(" + currPlayer.getBall() + ") has the turn.");
+		if (currPlayer instanceof HumanPlayer) {
+			switch (currPlayer.getBall()) {
 				case RED:
-					fieldPanel.setCursor(redCursor);
+					setCursorIfChanged(redCursor);
 					break;
 				case BLUE:
-					fieldPanel.setCursor(blueCursor);
+					setCursorIfChanged(blueCursor);
 					break;
 				case YELLOW:
-					fieldPanel.setCursor(yellowCursor);
+					setCursorIfChanged(yellowCursor);
 					break;
 				case GREEN:
-					fieldPanel.setCursor(greenCursor);
+					setCursorIfChanged(greenCursor);
 					break;
 				default:
 					break;
 			}
 		} else {
-			fieldPanel.setCursor(idleCursor);
+			setCursorIfChanged(idleCursor);
 		}
 		ballCountRedLabel.setText("" + board.countInstancesOf(Ball.RED));
 		ballCountBlueLabel.setText("" + board.countInstancesOf(Ball.BLUE));
 		ballCountYellowLabel.setText("" + board.countInstancesOf(Ball.YELLOW));
 		ballCountGreenLabel.setText("" + board.countInstancesOf(Ball.GREEN));
-		validate();
-		isFirstScreenUpdate = false;
-	}	
+	}
+		
+	private void setCursorIfChanged(Cursor cursor) {
+		if (!fieldPanel.getCursor().equals(cursor)) {
+			fieldPanel.setCursor(cursor);
+		}
+	}
+	
+	public void gameOver(Board board) {
+		if (board.hasWinner()) {
+			stateField.setText(game.getWinner().getName() + " has won the game!");
+			deactivateBoard();
+		} else {
+			stateField.setText("It's a draw.");
+		}
+		
+	}
+	
+	private void activateBoard() {
+		hintItem.setEnabled(true);
+	}
+	
+	private void deactivateBoard() {
+		hintItem.setEnabled(false);
+	}
 	
 	public String toString() {
 		String result = null;
@@ -511,12 +489,41 @@ public class GameUI extends JFrame implements Observer, PopupUI {
 		}
 	}
 	
+	public boolean readQuestionPopup(String title, String message) {
+		int choice = JOptionPane.showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION, 0);
+		if (choice == 1) {
+			return true;
+		}
+		return false;
+	}
+	
 	public static void newPopup(String title, String message, boolean warning) {
 		if (!warning) {
 			JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
 		} else {
 			JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
 		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource().equals(hintItem)) {
+			showHint();
+		} else if (e.getSource().equals(quitItem)) {
+			close();
+		} else if (e.getSource().equals(fullScreenItem)) {
+			if (getWidth() >= screenSize.getWidth() || 
+					getHeight() >= screenSize.getHeight()) {
+				setSize(oldSize);
+				setLocation(Tools.getCenterLocation(screenSize, getSize()));
+			} else {
+				oldSize = getSize();
+				setBounds(-10, -30, (int) screenSize.getWidth() + 20,
+						(int) screenSize.getHeight() + 50);
+
+			}
+		}
+
 	}
 	
 	

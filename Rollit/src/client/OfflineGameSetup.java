@@ -7,13 +7,15 @@ import game.GamePlayer;
 import game.HumanPlayer;
 import game.NaiveStrategy;
 import game.SmartStrategy;
+import game.SmarterStrategy;
 
 public class OfflineGameSetup {
 	
 	private String humanPlayer = "Human";
 	private String naiveAIPlayer = "Stupid PC";
 	private String smartAIPlayer = "Smart PC";
-	protected String[] playersKinds = {humanPlayer, naiveAIPlayer, smartAIPlayer};
+	private String smarterAIPlayer = "Smarter PC";
+	protected String[] playersKinds = {humanPlayer, naiveAIPlayer, smartAIPlayer, smarterAIPlayer};
 	
 	private OfflineGameSetupUI ui;
 	private Main main;
@@ -61,6 +63,8 @@ public class OfflineGameSetup {
 				players[i] = new ComputerPlayer(ball, new NaiveStrategy());
 			} else if (names[i].equals(playersKinds[2])) {
 				players[i] = new ComputerPlayer(ball, new SmartStrategy());
+			} else if (names[i].equals(playersKinds[3])) {
+				players[i] = new ComputerPlayer(ball, new SmarterStrategy());
 			}
 			ball = ball.next();
 		}

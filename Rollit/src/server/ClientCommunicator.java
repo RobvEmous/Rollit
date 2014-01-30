@@ -1,53 +1,18 @@
 package server;
 
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Observable;
 
 import clientAndServer.Command;
+import clientAndServer.Commands;
+import clientAndServer.GlobalSettings;
 import exceptions.ProtecolNotFollowedException;
 
 public class ClientCommunicator extends Observable {
-	
-	private static final int TIME_OUT = 2000;
-	private static final int SLEEP_TIME = 20;
-	private static final int SLEEP_COUNT = TIME_OUT / SLEEP_TIME;
-	
+		
 	private ClientHandler clientHandler;
 	
-	private String commandLogin = "login";
-	private String loginSuccesfull = "welcome";
-	private String loginUnSuccesfull = "incorrect";
-	
-	private String commandJoin = "join";
-	
-	private String commandChallenge = "challenge";
-	
-	private String commandDisjoin = "disjoin";
-	
-	private String commandChat = "chat";
-	
-	private String chatSuccesfull = "received";
-	private String chatUnSuccesfull = "error";
-	
-	private String commandMove = "move";
-	private String moveSuccesfull = "ok";
-	private String moveUnSuccesfull = "kick";
-	
-	private String commandQuitGame = "quitGame";
-	
-	private String commandGetHighScores = "getHighScores";
-	private String highScoreError = "";
-	
-	private String commandLogout = "logOut";
-
-	public String commandNewGame = "newGame";
-	public String commandMessage = "message";
-	public String commandUpdate = "update";
-	public String commandYourTurn = "yourTurn";
-	public String commandGameOver = "gameOver";
-
 	public ClientCommunicator(Server serverArg, Socket sockArg) throws IOException {
 		clientHandler = new ClientHandler(serverArg, sockArg);
 		clientHandler.start();
@@ -64,7 +29,7 @@ public class ClientCommunicator extends Observable {
 						clientHandler.removeCommand(c);
 					}
 					try {
-						Thread.sleep(SLEEP_TIME);
+						Thread.sleep(GlobalSettings.SLEEP_TIME);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -74,28 +39,33 @@ public class ClientCommunicator extends Observable {
 		reader.setDaemon(true);
 		reader.start();		
 	}
+	
+	public synchronized void sendAck(String id, String arg) throws IOException {
+		String[] args = {arg};
+		clientHandler.sendCommand(id + Commands.COM_ACK, args);
+	}
 
 	/**
 	 * 
-	 * @param name
-	 * @param password
-	 * @return 0 if exception, 1 if wrong password, 2 if success
+	 * @param players
+	 * @throws ProtecolNotFollowedException
+	 * @throws IOException
 	 */
 	public void newGame(String[] players) throws ProtecolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = players;
-		clientHandler.sendCommand(commandNewGame, args);
+		clientHandler.sendCommand(Commands.COM_NEWGAME, args);
 		while (true) {
 			for (Command c : clientHandler.getAnswers()) {
-				if (c.getId().equals(commandNewGame + ClientHandler.ACKNOWLEDGED)) {
+				if (c.getId().equals(Commands.COM_NEWGAME + Commands.COM_ACK)) {
 					clientHandler.removeCommand(c);
 					return;
 				} 
 			}
 			try {
-				Thread.sleep(SLEEP_TIME);
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
 				counter++;
-				if (counter >= SLEEP_COUNT) {
+				if (counter >= GlobalSettings.SLEEP_COUNT) {
 					throw new ProtecolNotFollowedException();
 				}
 			} catch (InterruptedException e) {
@@ -106,25 +76,27 @@ public class ClientCommunicator extends Observable {
 		
 	/**
 	 * 
+	 * @param playerName
 	 * @param x
 	 * @param y
-	 * @return
+	 * @throws ProtecolNotFollowedException
+	 * @throws IOException
 	 */
 	public void update(String playerName, int x, int y) throws ProtecolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = {playerName, x + "", y + ""};
-		clientHandler.sendCommand(commandUpdate, args);
+		clientHandler.sendCommand(Commands.COM_UPDATE, args);
 		while (true) {
 			for (Command c : clientHandler.getAnswers()) {
-				if (c.getId().equals(commandUpdate + ClientHandler.ACKNOWLEDGED)) {
+				if (c.getId().equals(Commands.COM_UPDATE + Commands.COM_ACK)) {
 					clientHandler.removeCommand(c);
 					return;
 				} 
 			}
 			try {
-				Thread.sleep(SLEEP_TIME);
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
 				counter++;
-				if (counter >= SLEEP_COUNT) {
+				if (counter >= GlobalSettings.SLEEP_COUNT) {
 					throw new ProtecolNotFollowedException();
 				}
 			} catch (InterruptedException e) {
@@ -135,22 +107,24 @@ public class ClientCommunicator extends Observable {
 	
 	/**
 	 * 
+	 * @throws ProtecolNotFollowedException
+	 * @throws IOException
 	 */
 	public void yourTurn() throws ProtecolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = {};
-		clientHandler.sendCommand(commandYourTurn, args);
+		clientHandler.sendCommand(Commands.COM_YOURTURN, args);
 		while (true) {
 			for (Command c : clientHandler.getAnswers()) {
-				if (c.getId().equals(commandYourTurn + ClientHandler.ACKNOWLEDGED)) {
+				if (c.getId().equals(Commands.COM_YOURTURN + Commands.COM_ACK)) {
 					clientHandler.removeCommand(c);
 					return;
 				} 
 			}
 			try {
-				Thread.sleep(SLEEP_TIME);
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
 				counter++;
-				if (counter >= SLEEP_COUNT) {
+				if (counter >= GlobalSettings.SLEEP_COUNT) {
 					throw new ProtecolNotFollowedException();
 				}
 			} catch (InterruptedException e) {
@@ -161,22 +135,52 @@ public class ClientCommunicator extends Observable {
 	
 	/**
 	 * 
+	 * @throws ProtecolNotFollowedException
+	 * @throws IOException
 	 */
-	public void gameOver() throws ProtecolNotFollowedException, IOException {
+	public void PlayerQuited() throws ProtecolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = {};
-		clientHandler.sendCommand(commandGameOver, args);
+		clientHandler.sendCommand(Commands.COM_GAMEOVER, args);
 		while (true) {
 			for (Command c : clientHandler.getAnswers()) {
-				if (c.getId().equals(commandGameOver + ClientHandler.ACKNOWLEDGED)) {
+				if (c.getId().equals(Commands.COM_GAMEOVER + Commands.COM_ACK)) {
 					clientHandler.removeCommand(c);
 					return;
 				} 
 			}
 			try {
-				Thread.sleep(SLEEP_TIME);
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
 				counter++;
-				if (counter >= SLEEP_COUNT) {
+				if (counter >= GlobalSettings.SLEEP_COUNT) {
+					throw new ProtecolNotFollowedException();
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * 
+	 * @throws ProtecolNotFollowedException
+	 * @throws IOException
+	 */
+	public void gameOver() throws ProtecolNotFollowedException, IOException {
+		int counter = 0;
+		String[] args = {};
+		clientHandler.sendCommand(Commands.COM_GAMEOVER, args);
+		while (true) {
+			for (Command c : clientHandler.getAnswers()) {
+				if (c.getId().equals(Commands.COM_GAMEOVER + Commands.COM_ACK)) {
+					clientHandler.removeCommand(c);
+					return;
+				} 
+			}
+			try {
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
+				counter++;
+				if (counter >= GlobalSettings.SLEEP_COUNT) {
 					throw new ProtecolNotFollowedException();
 				}
 			} catch (InterruptedException e) {

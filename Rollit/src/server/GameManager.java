@@ -3,6 +3,7 @@ package server;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
 import exceptions.RepeatedActionException;
@@ -14,18 +15,18 @@ import exceptions.RepeatedActionException;
  */
 public class GameManager {
 	
-	public static final int MAX_NR_OF_PLAYERS = 4;
-	public static final int MIN_NR_OF_PLAYERS = 2;
+	public static final int MAX_NR_OF_GAMEPLAYERS = 4;
+	public static final int MIN_NR_OF_GAMEPLAYERS = 2;
 	
-	private HashMap<Player, Integer> waiters;
-	private ArrayList<ServerGame> games;
+	private HashMap<GamePlayer, Integer> waiters;
+	private HashMap<ServerGame, GamePlayer[]> games;
 	
 	private boolean stop = false;
 
 
 	public GameManager() {
-		waiters = new HashMap<Player, Integer>();
-		games = new ArrayList<ServerGame>();
+		waiters = new HashMap<GamePlayer, Integer>();
+		games = new HashMap<ServerGame, GamePlayer[]>();
 		gameCreator();
 	}
 	
@@ -34,61 +35,80 @@ public class GameManager {
 			@Override
 			public void run() {
 				while (!stop) {
-					for (int i = MIN_NR_OF_PLAYERS; i <= MAX_NR_OF_PLAYERS; i++) {
-						ArrayList<Player> players = getPlayers(i);
-						if (players.size() >= i) {
-							ServerGame game = new ServerGame(players);
-							games.add(game);
-							removeWaiters(Tools.getFirstP(players, i));
+					for (int i = MIN_NR_OF_GAMEPLAYERS; i <= MAX_NR_OF_GAMEPLAYERS; i++) {
+						ArrayList<GamePlayer> GamePlayers = getGamePlayers(i);
+						if (waiters.size() >= i) {
+							ServerGame game = new ServerGame(GamePlayers, GlobalSettings.THINK_TIME);
+							game.start();
+							games.put(game, );
+							moveToGamePlayers(Tools.getFirstP(GamePlayers, i));
 						}
 					}
+					Thread.sleep(20);
 				}
 			}
+
 		});
 		gameCreator.start();
 	}
 
 	/**
-	 * Adds a player the lobby to wait for other players who want to play 
+	 * Adds a GamePlayer the lobby to wait for other GamePlayers who want to play 
 	 * against the same number of opponents.
-	 * @param player the player waiting to play a game.
-	 * @param nrOfPlayers the number of players the player wants to play 
+	 * @param GamePlayer the GamePlayer waiting to play a game.
+	 * @param nrOfGamePlayers the number of GamePlayers the GamePlayer wants to play 
 	 * with (including himself).
 	 * @throws RepeatedActionException
 	 */
-	public void addWaiter(Player player, int nrOfPlayers) throws RepeatedActionException {
+	public void addWaiter(GamePlayer GamePlayer, int nrOfGamePlayers) throws RepeatedActionException {
 		synchronized (waiters) {
-			if (waiters.containsKey(player)) {
+			if (waiters.containsKey(GamePlayer) || games.containsKey(GamePlayer)) {
 				throw new RepeatedActionException();
 			}
-			waiters.put(player, nrOfPlayers);
+			waiters.put(GamePlayer, nrOfGamePlayers);
 		}
 	}
 	
-	private void removeWaiters(ArrayList<Player> players) {
-		for (Player player : players) {
-			removeWaiter(player);
+	private void moveWaitersToGamePlayers(ArrayList<GamePlayer> theWaiter) {
+		
+	}
+	
+	private void removeWaiters(ArrayList<GamePlayer> GamePlayers) {
+		for (GamePlayer GamePlayer : GamePlayers) {
+			removeWaiter(GamePlayer);
 		}
 	}
 	
-	public void removeWaiter(Player player) {
+	
+	
+	public void removeWaiter(GamePlayer GamePlayer) {
 		synchronized (waiters) {
-			if (waiters.containsKey(player)) {
-				waiters.remove(player);
+			if (waiters.containsKey(GamePlayer)) {
+				waiters.remove(GamePlayer);
 			}
 		}
 	}
 	
-	private ArrayList<Player> getPlayers(int nrOfPlayers) {
-		ArrayList<Player> players = new ArrayList<Player>();
+	public void addGame(ServerGame game, GamePlayer[] GamePlayers) {
+		synchronized (games) {
+			games.put(game, GamePlayers);
+		}
+	}
+	
+	/**
+	 * Returns the GamePlayers which want to play this type of game.
+	 * @param nrOfGamePlayers the number of GamePlayers of the game
+	 */
+	private ArrayList<GamePlayer> getGamePlayers(int nrOfGamePlayers) {
+		ArrayList<GamePlayer> GamePlayers = new ArrayList<GamePlayer>();
 		synchronized (waiters) {
-			for (Player player : waiters.keySet()) {
-				if (waiters.get(player) == nrOfPlayers) {
-					players.add(player);
+			for (GamePlayer GamePlayer : waiters.keySet()) {
+				if (waiters.get(GamePlayer) == nrOfGamePlayers) {
+					GamePlayers.add(GamePlayer);
 				}
 			}
 		}
-		return players;
+		return GamePlayers;
 	}
 	
 }

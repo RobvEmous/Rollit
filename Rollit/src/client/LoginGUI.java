@@ -27,6 +27,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
+import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
 /**
@@ -40,34 +41,36 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	
 	private static final Insets PADDING = new Insets(5, 5, 5, 5);
 	
-	private Dimension windowSize = new Dimension(410, 165);
+	private Dimension windowSize = new Dimension(450, 175);
 	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	
-	private JButton bLogin;
+	private JTextField adress;
+	private String adressToolTip = "Fill in an ip-adress to connect to";
+	
+	private JTextField port;
+	private String portToolTip = "Fill in a port to connect to";
+	
 	private JTextField name;
 	private String nameToolTip = "Fill in your username or a new username";
 	
 	private JPasswordField password;
 	private String passToolTip = "Fill in your password or a new password";
 	
-	private String errorWrongPass = "The password doesn't correspond to the username!";
-	private String messageWelcome = "Welcome, ";
 	
+	private JButton bLogin;
 	private JButton bOffline;
-	
-	private String messageInit = "Must be connected first!";
 	
 	private Login login;
 	
+	private boolean adressTyped = true;
+	private boolean portTyped = true;
 	private boolean nameTyped = false;
 	private boolean passwordTyped = false;
 	
-	private int port = 0;
-	private InetAddress adress;
-			
 	/** Constructs a LoginGUI object. */
 	public LoginGUI(Login login) {
 		super("Rollit Login");
+		this.login = login;
 		buildGUI();
 		setVisible(true);
 		addWindowListener(new WindowAdapter() {
@@ -78,7 +81,6 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 				System.exit(0);
 			}
 		});
-		this.login = login;
 	}
 
 	/** builds the GUI. */
@@ -107,18 +109,35 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 		// declare all panels
 		JPanel fullPanel = new JPanel(new FlowLayout());
 		JPanel panels = new JPanel(new GridBagLayout());
-		JPanel panelLabels = new JPanel(new GridLayout(2, 0));
-		JPanel panelFields = new JPanel(new GridLayout(2, 0));
+		JPanel panelLabels = new JPanel(new GridLayout(4, 0));
+		JPanel panelFields = new JPanel(new GridLayout(4, 0));
+		JPanel panelButtons = new JPanel(new GridLayout(2, 0));
 		
 		GridBagConstraints panelLabelsC = new GridBagConstraints(
 				0, 0, 1, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
 		GridBagConstraints panelFieldsC = new GridBagConstraints(
 				1, 0, 2, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
-		GridBagConstraints panelLoginC = new GridBagConstraints(
+		GridBagConstraints panelButtonsC = new GridBagConstraints(
 				3, 0, 1, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
-		GridBagConstraints panelOfflineC = new GridBagConstraints(
-				2, 2, 1, 1, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
 
+		// create ip adress panel
+		JLabel lbAdress = new JLabel("Adress: ");
+		adress = new JTextField(login.getLocalHost(), 20);
+		adress.setToolTipText(adressToolTip);
+		adress.addKeyListener(this);
+		
+		panelLabels.add(lbAdress);
+		panelFields.add(adress);	
+		
+		// create port panel
+		JLabel lbPort = new JLabel("Port: ");
+		port = new JTextField(GlobalSettings.PORT_NR + "", 20);
+		port.setToolTipText(portToolTip);
+		port.addKeyListener(this);
+		
+		panelLabels.add(lbPort);
+		panelFields.add(port);	
+		
 		// create name panel
 		JLabel lbName = new JLabel("Name: ");
 		name = new JTextField("", 20);
@@ -135,23 +154,24 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 		password.addKeyListener(this);
 		
 		panelLabels.add(lbPass);
-		panelFields.add(password);			
+		panelFields.add(password);	
+		
 		panels.add(panelLabels, panelLabelsC);
 		panels.add(panelFields, panelFieldsC);
 		
-		// create login panel
+		// create button panel
 		bLogin = new JButton("Login");
 		bLogin.addActionListener(this);
 		bLogin.setEnabled(false);
 		
-		panels.add(bLogin, panelLoginC);
-		
-		// create offline panel
 		bOffline = new JButton("Play offline");
 		bOffline.addActionListener(this);
 		bOffline.setEnabled(false);
 		
-		panels.add(bOffline, panelOfflineC);
+		panelButtons.add(bLogin);
+		panelButtons.add(bOffline);
+		
+		panels.add(panelButtons, panelButtonsC);
 		fullPanel.add(panels);
 		add(fullPanel);
 	}
@@ -162,9 +182,11 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();
 		if (src.equals(bLogin)) {
+			String theAdress = adress.getText();
+			String thePort = port.getText();
 			String theName = name.getText();
 			String thePass = new String(password.getPassword());
-			if (login.tryLogin(theName, thePass)) {
+			if (login.tryLogin(theAdress, thePort, theName, thePass)) {
 				setVisible(false);
 				reset();
 			}
@@ -177,8 +199,12 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	}
 
 	public void reset() {
+		adress.setText("");
+		port.setText("");
 		name.setText("");
 		password.setText("");
+		adressTyped = false;
+		portTyped = false;
 		nameTyped = false;
 		passwordTyped = false;
 		updateLoginButton();
@@ -196,7 +222,11 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	private void updateFieldBooleans(KeyEvent e, JTextField item) {
 		String s = item.getText() + e.getKeyChar();
 		boolean validInput = Tools.containsLetterOrNumber(s);
-		if (item.equals(name)) {
+		if (item.equals(adress)) {
+			adressTyped = validInput;
+		} else if (item.equals(port)) {
+			portTyped = validInput;
+		} else if (item.equals(name)) {
 			nameTyped = validInput;
 		} else if (item.equals(password)) {
 			passwordTyped = validInput;
@@ -204,9 +234,9 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	}
 	
 	private void updateLoginButton() {
-		if (nameTyped && passwordTyped && !bLogin.isEnabled()) {
+		if (adressTyped && portTyped && nameTyped && passwordTyped && !bLogin.isEnabled()) {
 			bLogin.setEnabled(true);
-		} else if ((!nameTyped || !passwordTyped) && bLogin.isEnabled()) {
+		} else if ((!adressTyped || !portTyped || !nameTyped || !passwordTyped) && bLogin.isEnabled()) {
 			bLogin.setEnabled(false);
 		}
 	}

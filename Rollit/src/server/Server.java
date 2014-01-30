@@ -5,12 +5,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Vector;
-
-import clientAndServer.Command;
 
 /**
  * Server. A Thread class that listens to a socket connection on a 
@@ -21,14 +17,12 @@ import clientAndServer.Command;
  */
 public class Server extends Thread implements Observer {
 	private int port;
-	private MessageUI mui;
 	private Collection<ClientCommunicator> clients;
 
 
     /** Constructs a new Server object */
-	public Server(int portArg, MessageUI muiArg) {
+	public Server(Main main, int portArg) {
 		port = portArg;
-		mui = muiArg;
 		clients = new ArrayList<ClientCommunicator>();
 	}
 
@@ -58,11 +52,9 @@ public class Server extends Thread implements Observer {
          * to all connected Clients.
 	 * @param msg message that is send
 	 */
-	public synchronized void broadcast(String msg) {
-		//@ TODO
-		mui.addMessage(msg);
-		for (ClientHandler handler : threads) {
-			handler.sendMessage(msg);
+	public synchronized void broadcast(String id, String args) {
+		//TODO add to this mainUI
+		for (ClientCommunicator client : clients) {
 		}
 	}
 
