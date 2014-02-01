@@ -1,15 +1,17 @@
 package server;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.InetAddress;
@@ -23,10 +25,11 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
 /**
@@ -34,43 +37,45 @@ import clientAndServer.Tools;
  * @author  R&R
  * @version v0.1
  */
-public class MainUI extends JFrame implements ActionListener, MessageUI {
-	private static final long serialVersionUID = 8295677598601801613L;
+public class MainUI extends JFrame implements ActionListener, KeyListener {
+	private static final long serialVersionUID = 5756603861153289750L;
 	
-	private int screenWidth = 600;
-	private int screenHeight = 400;
-	private Dimension windowSize = new Dimension(screenWidth, screenHeight);
+	private static final Insets PADDING = new Insets(5, 5, 5, 5);
+	
+	private Dimension windowSize = new Dimension(440, 510);
 	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 	
 	private Main main;
+	
+	private String portToolTip = "Fill in a port to connect to";
 
 	private JButton bConnect;
-	private JTextField tfPort;
-	private JTextArea taMessages;
+	private JButton bDisconnect;
+	private JTextField address;
+	private JTextField port;
+	
+	private boolean portTyped = false;
+	
+	private JTextArea taMainMessages;
+	private JTextArea taClientManagerMessages;
+	private JTextArea taGameManagerMessages;
 
-	/** Constructs a ServerGUI object. */
+	/** Constructs a MainUI object. */
 	public MainUI(Main main) {
-		super("ServerGUI");
+		super("Rolit server");
 
 		buildGUI();
-		setVisible(true);
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				e.getWindow().dispose();
+				((MainUI) e.getWindow()).main.stop();
 			}
-			public void windowClosed(WindowEvent e) {
-				System.exit(0);
-			}
-		});		
+		});	
 		this.main = main;
 	}
 
 	/** builds the GUI. */
 	public void buildGUI() {
-		setSize(screenWidth, screenHeight);
-		setWindowLocation();
-		
 		setSize(windowSize);
 		setLocation(Tools.getCenterLocation(screenSize, windowSize));
 		
@@ -78,52 +83,120 @@ public class MainUI extends JFrame implements ActionListener, MessageUI {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu optionMenu = new JMenu("Options");
 		JMenuItem helpItem = new JMenuItem("Help");
-		for (int i = 0; i < 10; i++) {
-			helpItem.add(new JMenuItem("#" + i));
-		}
+		helpItem.addActionListener(new ActionListener() {	
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				addPopupMessage("Help", 
+						"Fill in the port to listen for clients.\n" +
+						"While the server is running, clients can connect" +
+						", play games and ask for high-scores.\n" +
+						"The three message-fields contain the messages " +
+						"from those parts of the server side.", false
+						);
+			}
+		});
 		optionMenu.add(helpItem);
 		menuBar.add(optionMenu);
 		setJMenuBar(menuBar);
 
+		// declare all panels
+		JPanel fullPanel = new JPanel(new FlowLayout());
+		JPanel panels = new JPanel(new GridBagLayout());
+		JPanel panelLabels = new JPanel(new GridLayout(2, 0));
+		JPanel panelFields = new JPanel(new GridLayout(2, 0));
+		JPanel panelButtons = new JPanel(new GridLayout(2, 0));
+		JPanel panelMessages = new JPanel(new GridLayout(3, 0));
 		
-		// Panel p1 - Listen
+		GridBagConstraints panelLabelsC = new GridBagConstraints(
+				0, 0, 1, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
+		GridBagConstraints panelFieldsC = new GridBagConstraints(
+				1, 0, 2, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
+		GridBagConstraints panelButtonsC = new GridBagConstraints(
+				3, 0, 1, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);	
+		GridBagConstraints panelMessagesC = new GridBagConstraints(
+				0, 3, 4, 9, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
 
-		JPanel p1 = new JPanel(new FlowLayout());
-		JPanel pp = new JPanel(new GridLayout(2, 2));
-
-		JLabel lbAddress = new JLabel("Address: ");
-		JTextField tfAddress = new JTextField(getHostAddress(), 12);
-		tfAddress.setEditable(false);
-
-		JLabel lbPort = new JLabel("Port:");
-		tfPort = new JTextField("8080", 5);
-
-		pp.add(lbAddress);
-		pp.add(tfAddress);
-		pp.add(lbPort);
-		pp.add(tfPort);
-
-		bConnect = new JButton("Start Listening");
+		// create ip adress panel
+		JLabel lbAdress = new JLabel("Address: ");
+		address = new JTextField(getHostAddress(), 20);
+		address.addKeyListener(this);
+		
+		panelLabels.add(lbAdress);
+		panelFields.add(address);	
+		
+		// create port panel
+		JLabel lbPort = new JLabel("Port: ");
+		port = new JTextField(GlobalSettings.PORT_NR + "", 20);
+		port.setToolTipText(portToolTip);
+		port.addKeyListener(this);
+		
+		panelLabels.add(lbPort);
+		panelFields.add(port);	
+			
+		panels.add(panelLabels, panelLabelsC);
+		panels.add(panelFields, panelFieldsC);
+		
+		// create button panel
+		bConnect = new JButton("Start server");
 		bConnect.addActionListener(this);
+		bConnect.setEnabled(true);
+		
+		bDisconnect = new JButton("Stop server");
+		bDisconnect.addActionListener(this);
+		bDisconnect.setEnabled(false);
+		
+		panelButtons.add(bConnect);
+		panelButtons.add(bDisconnect);
+		
+		// Create message panel
+		JPanel panelMessages1 = new JPanel(new BorderLayout());
+		JPanel panelMessages2 = new JPanel(new BorderLayout());
+		JPanel panelMessages3 = new JPanel(new BorderLayout());
 
-		p1.add(pp, BorderLayout.WEST);
-		p1.add(bConnect, BorderLayout.EAST);
+		JLabel lbMessages1 = new JLabel("Messages of main:");
+		JLabel lbMessages2 = new JLabel("Messages of client manager:");
+		JLabel lbMessages3 = new JLabel("Messages of game manager:");
 
-		// Panel p2 - Messages
+		taMainMessages = new JTextArea("", 6, 35);
+		taMainMessages.setLineWrap(true);
+		taMainMessages.setWrapStyleWord(true);
+		taMainMessages.setEditable(false);
+		taMainMessages.setAutoscrolls(true);
+		JScrollPane chatBoxScrollPane1 = new JScrollPane(taMainMessages);
 
-		JPanel p2 = new JPanel();
-		p2.setLayout(new BorderLayout());
+		panelMessages1.add(lbMessages1, BorderLayout.NORTH);
+		panelMessages1.add(chatBoxScrollPane1, BorderLayout.CENTER);
+		
+		taClientManagerMessages = new JTextArea("", 6, 35);
+		taClientManagerMessages.setLineWrap(true);
+		taClientManagerMessages.setWrapStyleWord(true);
+		taClientManagerMessages.setEditable(false);
+		taClientManagerMessages.setAutoscrolls(true);
+		JScrollPane chatBoxScrollPane2 = new JScrollPane(taClientManagerMessages);
 
-		JLabel lbMessages = new JLabel("Messages:");
-		taMessages = new JTextArea("", 15, 50);
-		taMessages.setEditable(false);
-		p2.add(lbMessages);
-		p2.add(taMessages, BorderLayout.SOUTH);
+		panelMessages2.add(lbMessages2, BorderLayout.NORTH);
+		panelMessages2.add(chatBoxScrollPane2, BorderLayout.CENTER);
+		
+		taGameManagerMessages = new JTextArea("", 6, 35);
+		taGameManagerMessages.setLineWrap(true);
+		taGameManagerMessages.setWrapStyleWord(true);
+		taGameManagerMessages.setEditable(false);
+		taGameManagerMessages.setAutoscrolls(true);
+		JScrollPane chatBoxScrollPane3 = new JScrollPane(taGameManagerMessages);
 
-		Container cc = getContentPane();
-		cc.setLayout(new FlowLayout());
-		cc.add(p1);
-		cc.add(p2);
+		panelMessages3.add(lbMessages3, BorderLayout.NORTH);
+		panelMessages3.add(chatBoxScrollPane3, BorderLayout.CENTER);
+		
+		panelMessages.add(panelMessages1);
+		panelMessages.add(panelMessages2);
+		panelMessages.add(panelMessages3);
+		
+		panels.add(panelLabels, panelLabelsC);
+		panels.add(panelFields, panelFieldsC);
+		panels.add(panelButtons, panelButtonsC);
+		panels.add(panelMessages, panelMessagesC);
+		fullPanel.add(panels);
+		add(fullPanel);
 	}
 
 	/** returns the Internetadress of this computer */
@@ -137,12 +210,14 @@ public class MainUI extends JFrame implements ActionListener, MessageUI {
 	}
 
 	/**
-	 * listener for the "Start Listening" button
+	 * listener for the buttons
 	 */
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();
 		if (src == bConnect) {
 			startListening();
+		} else if (src.equals(bDisconnect)) {
+			stopListening();
 		}
 	}
 
@@ -150,30 +225,64 @@ public class MainUI extends JFrame implements ActionListener, MessageUI {
 	 * Construct a Server-object, which is waiting for clients. The port field and button should be disabled
 	 */
 	private void startListening() {
-		int port = 0;
+		int portNr = 0;
 		try {
-			port = Integer.parseInt(tfPort.getText());
-			if (port < 0 || port > 65535) {
+			portNr = Integer.parseInt(port.getText());
+			if (portNr < 0 || portNr > 65535) {
 				throw new NumberFormatException();
 			}
 		} catch (NumberFormatException e) {
 			addPopupMessage("Port invalid", "Port: " 
-					+ port + " is not a valid portnumber!", true);
+					+ portNr + " is not a valid portnumber!", true);
 			return;
 		}
-		tfPort.setText(port + "");
-		tfPort.setEditable(false);
+		port.setText(portNr + "");
+		port.setEditable(false);
 		bConnect.setEnabled(false);
 		
-		addPopupMessage("Server started", "Started listening on port: " 
-				+ port + ".", false);
+		main.startListening(portNr);
 		
-		main.startServer(port);
+		taMainMessages.setText("");
+		taClientManagerMessages.setText("");
+		taGameManagerMessages.setText("");
+		
+		addPopupMessage("Server started", "The server side of the Rolit " +
+				" game has been started succesfully!\n Started listening on " +
+				"port: " + portNr + ".", false);
+		
+		bDisconnect.setEnabled(true);	
+	}
+	
+	private void stopListening() {
+		bDisconnect.setEnabled(false);	
+		main.stopListening();
+		port.setEditable(true);
+		
+		addPopupMessage("Server stopped", "The server side of the Rolit " +
+				" game has been stopped succesfully!", false);
+		
+		bConnect.setEnabled(true);
 	}
 
-	/** add a message to the textarea  */
-	public void addMessage(String msg) {
-		taMessages.append(msg + "\n");
+	/** 
+	 * add a message to the main-textarea.  
+	 */
+	public void addMainMessage(String msg) {
+		taMainMessages.append(msg + "\n");
+	}	
+
+	/** 
+	 * add a message to the clientManager-textarea.
+	 */
+	public void addClientManagerMessage(String msg) {
+		taClientManagerMessages.append(msg + "\n");
+	}
+	
+	/** 
+	 * add a message to the gameManager-textarea.
+	 */
+	public void addGameManagerMessage(String msg) {
+		taGameManagerMessages.append(msg + "\n");
 	}
 	
 	/** pops up a message to the user  */
@@ -184,12 +293,33 @@ public class MainUI extends JFrame implements ActionListener, MessageUI {
 			JOptionPane.showMessageDialog(this, msg, title, JOptionPane.ERROR_MESSAGE);
 		}
 	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {	
+		Object trigger = e.getSource();
+		updateFieldBoolean(e, (JTextField) trigger);
+		updateConnectButton();
+	}
 	
-	private void setWindowLocation() {
-		setLocation(
-		(int)(screenSize.getWidth() / 2 - windowSize.width / 2),
-		(int)(screenSize.getHeight() / 2 - windowSize.height / 2)
-		);
+	private void updateFieldBoolean(KeyEvent e, JTextField item) {
+		String s = item.getText() + e.getKeyChar();
+		boolean validInput = Tools.containsLetterOrNumber(s);
+		if (item.equals(address)) {
+			portTyped = validInput;
+		} 	
+	}
+	
+	private void updateConnectButton() {
+		if (portTyped && !bConnect.isEnabled()) {
+			bConnect.setEnabled(true);
+		} else if (!portTyped && bConnect.isEnabled()) {
+			bConnect.setEnabled(false);
+		}
 	}
 
+	@Override
+	public void keyPressed(KeyEvent e) {}
+	@Override
+	public void keyReleased(KeyEvent e) {}
+	
 }

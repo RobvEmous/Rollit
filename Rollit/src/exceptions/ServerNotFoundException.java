@@ -3,7 +3,7 @@ package exceptions;
 import java.io.IOException;
 
 /**
- * Signals that the server on the specified adress and port does not 
+ * Signals that the server on the specified address and port does not 
  * respond to an attempt to connect.
  * 
  * @author Rob van Emous

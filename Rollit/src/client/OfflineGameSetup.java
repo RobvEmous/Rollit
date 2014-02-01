@@ -6,6 +6,8 @@ import game.OfflineGame;
 import game.GamePlayer;
 import game.HumanPlayer;
 import game.NaiveStrategy;
+import game.OfflineHumanPlayer;
+import game.OnlineHumanPlayer;
 import game.SmartStrategy;
 import game.SmarterStrategy;
 
@@ -57,7 +59,11 @@ public class OfflineGameSetup {
 		GamePlayer[] players = new GamePlayer[names.length];
 		for (int i = 0; i < names.length; i++) {	
 			if (names[i].equals(playersKinds[0])) {
-				players[i] = new HumanPlayer(main.getClientName() + humanCounter, ball);
+				if (humanCounter > 1) {
+					players[i] = new OfflineHumanPlayer(main.getClientName() + humanCounter, ball);
+				} else {
+					players[i] = new OfflineHumanPlayer(main.getClientName(), ball);
+				}
 				humanCounter++;
 			} else if (names[i].equals(playersKinds[1])) {
 				players[i] = new ComputerPlayer(ball, new NaiveStrategy());
@@ -70,4 +76,5 @@ public class OfflineGameSetup {
 		}
 		return players;
 	}
+	
 }

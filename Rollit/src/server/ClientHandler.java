@@ -9,7 +9,10 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import javax.sound.sampled.Port;
+
 import clientAndServer.Command;
+import clientAndServer.Commands;
 import clientAndServer.Tools;
 
 /**
@@ -19,26 +22,25 @@ import clientAndServer.Tools;
  */
 public class ClientHandler extends Thread {
 
-	private Server server;
-	private ClientCommunicator c;
 	private Socket sock;
 	private BufferedReader in;
 	private BufferedWriter out;
-	private String clientName;
 	
 	private ArrayList<Command> commands;
 	private ArrayList<Command> answers;
 	private static final int MAX_SIZE = 50;
-	public static final String ACKNOWLEDGED = "Ack";
+	
+	private boolean stop = false;
 	
 	/**
 	 * Constructs a ClientHandler object and initializes both Data streams.
 	 */
-	public ClientHandler(Server serverArg, Socket sockArg) throws IOException {
-		server = serverArg;
+	public ClientHandler(Socket sockArg) throws IOException {
 		sock = sockArg;
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
+		commands = new ArrayList<Command>();
+		answers = new ArrayList<Command>();
 	}
 	
 	/**
@@ -46,12 +48,12 @@ public class ClientHandler extends Thread {
 	 */
 	public void run() {
 		try {
-			while (true) {
+			while (!stop) {
 				Command c = waitForCommand();
-				if (c.getId().contains(ACKNOWLEDGED)) {
+				if (c.getId().contains(Commands.COM_ACK)) {
 					synchronized (answers) {
 						String id = c.getId();
-						c.setId(id.substring(0, id.length() - ACKNOWLEDGED.length()));
+						c.setId(id.substring(0, id.length() - Commands.COM_ACK.length()));
 						answers.add(c);
 						if (answers.size() > MAX_SIZE) {
 							removeOldestAnswer();
@@ -75,7 +77,7 @@ public class ClientHandler extends Thread {
 	
 	private String waitForLine() throws IOException {
 		String line = null;
-		while ((line = in.readLine()) == null) {
+		while (!stop && (line = in.readLine()) == null) {
 			try {
 				Thread.sleep(20);
 			} catch (InterruptedException e) {
@@ -97,7 +99,7 @@ public class ClientHandler extends Thread {
 			command.add(scanner.next());			
 		}
 		scanner.close();
-		return new Command(first, (String[])command.toArray());
+		return new Command(first, (String[])command.toArray(new String[command.size()]));
 	}
 	
 	/** send a message to the ServerHandler. */
@@ -182,6 +184,7 @@ public class ClientHandler extends Thread {
 	 * closes the socket connection. 
 	 * */
 	public void shutdown() {
+		stop = true;
 		try {
 			in.close();
 		} catch (IOException e) {
@@ -199,8 +202,9 @@ public class ClientHandler extends Thread {
 		}
 	}
 	
-	public String getClientName() {
-		return clientName;
+	@Override
+	public String toString() {
+		return sock.toString();
 	}
 
 }

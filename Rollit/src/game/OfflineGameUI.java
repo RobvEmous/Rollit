@@ -1,8 +1,10 @@
 package game;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -12,12 +14,11 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Observable;
-import java.util.Observer;
+import java.awt.event.WindowListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -28,12 +29,14 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
-import client.JoinGameSetupUI;
 import client.PopupUI;
 import clientAndServer.Ball;
 import clientAndServer.Board;
@@ -44,7 +47,7 @@ import clientAndServer.Tools;
  * @author René Nijhuis
  * @version 0.6
  */
-public class GameUI extends JFrame implements ActionListener, PopupUI {
+public class OfflineGameUI extends JFrame implements ActionListener, PopupUI {
 	private static final long serialVersionUID = 5844574958336659575L;
 	
 	private Dimension windowSize = new Dimension(800,600);
@@ -52,7 +55,6 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 	private Dimension oldSize = windowSize;
 	
 	private OfflineGame game;
-	private boolean onlineGame;
 
 	private FieldListener fieldListener;
 	
@@ -63,17 +65,13 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 	private JPanel ballCountPanel;
 	private JPanel fieldPanel;
 	
-	
 	private JMenuItem hintItem;
 	private JMenuItem quitItem;
 	private JMenuItem fullScreenItem;
 	
-	
 	private FieldButton[][] field;
 	
-	private JTextField stateField;
-	private JTextArea chatBox;
-	private JTextField chat;
+	private JTextPane stateField;
 	private int[] ballCounts = new int[] {0, 0, 0, 0};
 	private JLabel ballCountRedLabel;
 	private JLabel ballCountBlueLabel;
@@ -84,7 +82,6 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 
 	private Color backgroundColor = Color.BLACK;
 	private Color foregroundColor = Color.WHITE;
-	private Color textBoxColor = Color.GRAY;
 	
 	private Cursor redCursor;
 	private Cursor blueCursor;
@@ -92,7 +89,7 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 	private Cursor greenCursor;
 	private Cursor idleCursor;
 	
-	public GameUI(OfflineGame g){
+	public OfflineGameUI(OfflineGame g){
 		super("Rolit");
 		game = g;
 		initialize();	
@@ -110,12 +107,12 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 		
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				((GameUI) e.getWindow()).close();
+				((OfflineGameUI) e.getWindow()).close();
 			}
+			
 		});
 		
-		fullPanel = new JPanel(new GridBagLayout());
-		//fullPanel.setSize((int) (getWidth() - 50), (int) (getHeight() -50));
+		fullPanel = new JPanel(new BorderLayout());
 		fullPanel.setBackground(backgroundColor);
 		
 		add(fullPanel);
@@ -168,26 +165,26 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 		blueCursor = tool.createCustomCursor(blueCursorImage, new Point(16,16), "ballCursor");
 		yellowCursor = tool.createCustomCursor(yellowCursorImage, new Point(16,16), "ballCursor");
 		greenCursor = tool.createCustomCursor(greenCursorImage, new Point(16,16), "ballCursor");
-		idleCursor = tool.createCustomCursor(idleCursorImage, new Point(16,16), "ballCursor");
-		
+		idleCursor = tool.createCustomCursor(idleCursorImage, new Point(16,16), "ballCursor");	
 	}
 
-	private void createOptionsPanel() {
+	private void createOptionsPanel() {	
 		optionsPanel = new JPanel(new GridBagLayout());
 		optionsPanel.setBackground(backgroundColor);
-		GridBagConstraints optionsPanelC = new GridBagConstraints(4, 0, 1, 1, 1D, 1D,
-				GridBagConstraints.LINE_END, GridBagConstraints.BOTH, inset, 0, 0);
+		optionsPanel.setPreferredSize(new Dimension(200, optionsPanel.getPreferredSize().height));
+	
+		fullPanel.add(optionsPanel, BorderLayout.EAST);
 		
-		fullPanel.add(optionsPanel, optionsPanelC);		
-		
-		stateField = new JTextField();
+		stateField = new JTextPane();
 		GridBagConstraints stateFieldC = new GridBagConstraints(0, 0, 1, 1, 1D, 1D,
 				GridBagConstraints.CENTER, GridBagConstraints.BOTH, inset, 0, 0);
 		stateField.setEditable(false);
 		stateField.setBackground(backgroundColor);
 		stateField.setForeground(foregroundColor);;
-		stateField.setPreferredSize(new Dimension(optionsPanel.getWidth(), 50));
-		stateField.setHorizontalAlignment(JTextField.CENTER);
+		StyledDocument doc = stateField.getStyledDocument();
+		SimpleAttributeSet center = new SimpleAttributeSet();
+		StyleConstants.setAlignment(center, StyleConstants.ALIGN_CENTER);
+		doc.setParagraphAttributes(0, doc.getLength(), center, false);
 		stateField.setToolTipText("This displays who has the turn or who has won the game");
 		optionsPanel.add(stateField, stateFieldC);
 		
@@ -197,150 +194,87 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 		seperator1.setPreferredSize(new Dimension(getPreferredSize().width, 2));
 		optionsPanel.add(seperator1, sep1C);
 		
-		createBallCountPanel();
-		
-		if (onlineGame) {
-			JSeparator seperator2 = new JSeparator(JSeparator.HORIZONTAL);
-			GridBagConstraints sep2C = new GridBagConstraints(0, 6, 1, 1, 1D, 1D, 
-					GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-			seperator1.setPreferredSize(new Dimension(getPreferredSize().width, 2));
-			optionsPanel.add(seperator2, sep2C);
-			
-			JSeparator seperator3 = new JSeparator(JSeparator.HORIZONTAL);
-			GridBagConstraints sep3C = new GridBagConstraints(0, 7, 1, 1, 1D, 1D, 
-					GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-			seperator1.setPreferredSize(new Dimension(getPreferredSize().width, 2));
-			optionsPanel.add(seperator3, sep3C);
-			
-			createChatPanel();
-		}
-	}
-
-	private void createChatPanel() {
-		JPanel chatPanel = new JPanel(new GridBagLayout());
-		chatPanel.setBackground(backgroundColor);
-		GridBagConstraints chatPanelC = new GridBagConstraints(0, 8, 1, 4, 1D, 1D, 
-				GridBagConstraints.CENTER, GridBagConstraints.BOTH, inset, 0, 0);
-		optionsPanel.add(chatPanel, chatPanelC);
-		
-		JLabel chatBoxLabel = new JLabel("Chat");
-		chatBoxLabel.setForeground(foregroundColor);
-		chatBoxLabel.setHorizontalAlignment(JLabel.CENTER);
-		GridBagConstraints chatBoxLabelC = new GridBagConstraints(0, 0, 1, 1, 1D, 1D,
-				GridBagConstraints.PAGE_START, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-		optionsPanel.add(chatBoxLabel, chatBoxLabelC);
-		
-		chatBox = new JTextArea();
-		chatBox.setBackground(textBoxColor);
-		chatBox.setForeground(foregroundColor);
-		chatBox.setLineWrap(true);
-		chatBox.setWrapStyleWord(true);
-		chatBox.setEditable(false);
-		chatBox.setAutoscrolls(true);
-		JScrollPane chatBoxScrollPane = new JScrollPane(chatBox);
-		chatBoxScrollPane.setPreferredSize(new Dimension(getPreferredSize().width -5 , 100));
-		GridBagConstraints chatBoxScrollPaneC = new GridBagConstraints(0, 1, 1, 3, 1D, 1D,
-				GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-		
-		chat = new JTextField();
-		chat.setBackground(textBoxColor);
-		chat.setForeground(foregroundColor);
-		chat.setPreferredSize(new Dimension(getPreferredSize().width -5, 30));
-		chat.addKeyListener(new KeyListener() {
-			boolean messageTyped;
-			@Override
-			public void keyTyped(KeyEvent e) {
-				messageTyped = false;
-				char c = e.getKeyChar();
-				if (Tools.isLetterOrNumber(c)) {
-					messageTyped = true;
-				} else {
-					String s = chat.getText();
-					if (Tools.containsLetterOrNumber(s)) {
-						messageTyped = true;
-					} 	
-				}
-			}
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && messageTyped) {
-					chatBox.append("Player1: " + chat.getText() + "\n");
-					chat.setText("");
-				}
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-			}			
-		});
-		GridBagConstraints chatConstraints = new GridBagConstraints(0, 4, 1, 1, 1D, 1D,
-				GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-		
-		chatPanel.add(chatBoxLabel, chatBoxLabelC);
-		chatPanel.add(chatBoxScrollPane, chatBoxScrollPaneC);
-		chatPanel.add(chat, chatConstraints);
-		
+		createBallCountPanel();	
 	}
 
 	private void createBallCountPanel() {
 		ballCountPanel = new JPanel(new GridBagLayout());
 		ballCountPanel.setBackground(backgroundColor);
-		GridBagConstraints ballCountPanelTextC = new GridBagConstraints(0, 0, 4, 1, 1D, 1D,
-				GridBagConstraints.PAGE_START, GridBagConstraints.HORIZONTAL, inset, 0, 0);
-		JLabel ballCountPanelText = new JLabel("Ball Count");
+		
+		// create panels
+		JPanel ballCountNames = new JPanel(new GridLayout(4, 0));
+		JPanel ballCountIcons = new JPanel(new GridLayout(4, 0));
+		JPanel ballCountValues = new JPanel(new GridLayout(4, 0));
+		
+		ballCountNames.setBackground(backgroundColor);
+		ballCountIcons.setBackground(backgroundColor);
+		ballCountValues.setBackground(backgroundColor);
+		
+		GridBagConstraints ballCountPanelC = new GridBagConstraints(
+				0, 2, 1, 5, 1D, 1D, GridBagConstraints.CENTER, GridBagConstraints.BOTH, inset, 0, 0);
+		GridBagConstraints ballCountPanelTextC = new GridBagConstraints(
+				0, 0, 4, 1, 1D, 1D, GridBagConstraints.CENTER, 0, inset, 0, 0);
+		GridBagConstraints ballCountNamesC = new GridBagConstraints(
+				0, 1, 1, 4, 1D, 1D, GridBagConstraints.CENTER, 0, inset, 0, 0);
+		GridBagConstraints ballCountIconsC = new GridBagConstraints(
+				1, 1, 1, 4, 1D, 1D, GridBagConstraints.CENTER, 0, inset, 0, 0);
+		GridBagConstraints ballCountValuesC = new GridBagConstraints(
+				2, 1, 1, 4, 1D, 1D, GridBagConstraints.CENTER, 0, inset, 0, 0);
+
+		// create score label
+		JLabel ballCountPanelText = new JLabel("Score");
 		ballCountPanelText.setForeground(foregroundColor);
-		ballCountPanelText.setPreferredSize(new Dimension(optionsPanel.getWidth(), 50));
 		ballCountPanelText.setHorizontalAlignment(JLabel.CENTER);
 		ballCountPanelText.setToolTipText("The amount of balls each player has on the field.");
-		GridBagConstraints ballCountRedIconC = new GridBagConstraints(0, 1, 
-				1, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.NONE, 
-				inset, 0, 0);
-		JLabel ballCountRedIconLabel = new JLabel(new ImageIcon("Pictures/BallRed16.png"));
-		GridBagConstraints ballCountRedC = new GridBagConstraints(1, 1, 
-				3, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, 
-				inset, 0, 0);
-		ballCountRedLabel = new JLabel(String.valueOf(ballCounts[0]));
-		ballCountRedLabel.setForeground(foregroundColor);
-		GridBagConstraints ballCountBlueIconC = new GridBagConstraints(0, 2, 
-				1, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.NONE, 
-				inset, 0, 0);
-		JLabel ballCountBlueIconLabel = new JLabel(new ImageIcon("Pictures/BallBlue16.png"));
-		GridBagConstraints ballCountBlueC = new GridBagConstraints(1, 2, 
-				3, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, 
-				inset, 0, 0);
-		ballCountBlueLabel = new JLabel(String.valueOf(ballCounts[1]));
-		ballCountBlueLabel.setForeground(foregroundColor);
-		GridBagConstraints ballCountYellowIconC = new GridBagConstraints(0, 3, 
-				1, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.NONE, 
-				inset, 0, 0);
-		JLabel ballCountYellowIconLabel = new JLabel(new ImageIcon("Pictures/BallYellow16.png"));
-		GridBagConstraints ballCountYellowC = new GridBagConstraints(1, 3, 
-				3, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, 
-				inset, 0, 0);
-		ballCountYellowLabel = new JLabel(String.valueOf(ballCounts[2]));
-		ballCountYellowLabel.setForeground(foregroundColor);
-		GridBagConstraints ballCountGreenIconC = new GridBagConstraints(0, 4, 
-				1, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.NONE, 
-				inset, 0, 0);
-		JLabel ballCountGreenIconLabel = new JLabel(new ImageIcon("Pictures/BallGreen16.png"));
-		GridBagConstraints ballCountGreenC = new GridBagConstraints(1, 4, 
-				3, 1, 1D, 1D, GridBagConstraints.PAGE_START, GridBagConstraints.BOTH, 
-				inset, 0, 0);
-		ballCountGreenLabel = new JLabel(String.valueOf(ballCounts[3]));
-		ballCountGreenLabel.setForeground(foregroundColor);
 		ballCountPanel.add(ballCountPanelText, ballCountPanelTextC);
-		ballCountPanel.add(ballCountRedIconLabel, ballCountRedIconC);
-		ballCountPanel.add(ballCountRedLabel, ballCountRedC);
-		ballCountPanel.add(ballCountBlueIconLabel, ballCountBlueIconC);
-		ballCountPanel.add(ballCountBlueLabel, ballCountBlueC);
-		ballCountPanel.add(ballCountYellowIconLabel, ballCountYellowIconC);
-		ballCountPanel.add(ballCountYellowLabel, ballCountYellowC);
-		ballCountPanel.add(ballCountGreenIconLabel, ballCountGreenIconC);
-		ballCountPanel.add(ballCountGreenLabel, ballCountGreenC);
-		ballCountPanel.setSize(optionsPanel.getWidth(), 300);
-		GridBagConstraints ballCountPanelC = new GridBagConstraints(0, 2, 1, 4, 1D, 1D,
-				GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, inset, 0, 0);
+
+		// create scores per player and color
+		GamePlayer[] players = game.getPlayers();
+		
+		JLabel player1 = new JLabel(players[0].getName());
+		ballCountRedLabel = new JLabel(ballCounts[0] + "");
+		player1.setForeground(foregroundColor);
+		ballCountRedLabel.setForeground(foregroundColor);
+		JLabel ballCountRedIconLabel = new JLabel(new ImageIcon("Pictures/BallRed16.png"));
+		
+		JLabel player2 = new JLabel(players[1].getName());
+		ballCountGreenLabel = new JLabel(ballCounts[1] + "");
+		player2.setForeground(foregroundColor);
+		ballCountGreenLabel.setForeground(foregroundColor);
+		JLabel ballCountGreenIconLabel = new JLabel(new ImageIcon("Pictures/BallGreen16.png"));
+		
+		ballCountNames.add(player1);
+		ballCountNames.add(player2);
+		ballCountIcons.add(ballCountRedIconLabel);
+		ballCountIcons.add(ballCountGreenIconLabel);
+		ballCountValues.add(ballCountRedLabel);
+		ballCountValues.add(ballCountGreenLabel);
+		
+		if (players.length > 2) {
+			JLabel player3 = new JLabel(players[2].getName());
+			ballCountYellowLabel = new JLabel(ballCounts[2] + "");
+			player3.setForeground(foregroundColor);
+			ballCountYellowLabel.setForeground(foregroundColor);
+			JLabel ballCountYellowIconLabel = new JLabel(new ImageIcon("Pictures/BallYellow16.png"));
+			ballCountNames.add(player3);
+			ballCountIcons.add(ballCountYellowIconLabel);
+			ballCountValues.add(ballCountYellowLabel);
+		}
+		if (players.length > 3) {
+			JLabel player4 = new JLabel(players[3].getName());
+			ballCountBlueLabel = new JLabel(ballCounts[3] + "");
+			player4.setForeground(foregroundColor);
+			ballCountBlueLabel.setForeground(foregroundColor);
+			JLabel ballCountBlueIconLabel = new JLabel(new ImageIcon("Pictures/BallBlue16.png"));
+			ballCountNames.add(player4);
+			ballCountIcons.add(ballCountBlueIconLabel);
+			ballCountValues.add(ballCountBlueLabel);
+		}
+
+		ballCountPanel.add(ballCountNames, ballCountNamesC);
+		ballCountPanel.add(ballCountIcons, ballCountIconsC);
+		ballCountPanel.add(ballCountValues, ballCountValuesC);
+
 		optionsPanel.add(ballCountPanel, ballCountPanelC);
 	}
 
@@ -351,12 +285,34 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 	 * size.
 	 */
 	private void createField() {
-		GridLayout fieldLayout = new GridLayout(Board.Y_MAX, Board.X_MAX);
-		fieldPanel = new JPanel(fieldLayout);
-		GridBagConstraints fieldPanelC = new GridBagConstraints(0, 0, 4, 1, 1D, 1D,
-				GridBagConstraints.LINE_START, GridBagConstraints.BOTH, inset, 0, 0);
-
-		fullPanel.add(fieldPanel, fieldPanelC);
+		fieldPanel = new JPanel(new GridLayout(Board.Y_MAX, Board.X_MAX));
+		fieldPanel.addComponentListener(new ComponentListener() {			
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int fieldX = fieldPanel.getWidth() / Board.X_MAX;
+				int fieldY = fieldPanel.getHeight() / Board.Y_MAX;
+				if (fieldX < fieldY) {
+					fieldY = fieldX;
+				}
+				if (fieldY < fieldX) {
+					fieldX = fieldY;
+				}
+				/*fieldPanel.setSize(fieldX * Board.X_MAX, fieldY * Board.Y_MAX);	
+				for (int y = 0; y < Board.Y_MAX; y++) {
+					for (int x = 0; x <Board.X_MAX; x++) {
+						field[y][x].setSize(fieldX, fieldY);
+					}
+				}
+				fullPanel.invalidate();*/
+			}
+			@Override
+			public void componentShown(ComponentEvent e) {}	
+			@Override
+			public void componentMoved(ComponentEvent e) {}	
+			@Override
+			public void componentHidden(ComponentEvent e) {}
+		});
+		fullPanel.add(fieldPanel, BorderLayout.CENTER);
 		
 		if (game.hasHuman()) {
 			fieldListener = new FieldListener(this);
@@ -371,6 +327,7 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 				fieldPanel.add(field[y][x]);
 			}
 		}
+
 	}
 	
 	protected void showHint() {
@@ -397,15 +354,14 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				if (field[y][x].equals(pressedButton) && 
 						currentPlayer instanceof HumanPlayer) {
-						((HumanPlayer) currentPlayer).choice = new Point(x,y);
+						((OfflineHumanPlayer) currentPlayer).choice = new Point(x,y);
 				}
 			}
 		}
 	}
 	
 	public void update(Board board) {
-		oldHint = null;
-		activateBoard();
+		oldHint = null;		
 		for (int y = 0; y < Board.Y_MAX; y++) {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				Ball ball = board.getField(x, y);
@@ -416,8 +372,9 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 			}
 		}
 		GamePlayer currPlayer = game.getCurrentPlayer();
-		stateField.setText(currPlayer.getName() + "(" + currPlayer.getBall() + ") has the turn.");
+		stateField.setText("\n" + currPlayer.getName() + "(" + currPlayer.getBall() + ") has the turn.");
 		if (currPlayer instanceof HumanPlayer) {
+			activateBoard();
 			switch (currPlayer.getBall()) {
 				case RED:
 					setCursorIfChanged(redCursor);
@@ -435,12 +392,17 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 					break;
 			}
 		} else {
+			deactivateBoard();
 			setCursorIfChanged(idleCursor);
 		}
 		ballCountRedLabel.setText("" + board.countInstancesOf(Ball.RED));
-		ballCountBlueLabel.setText("" + board.countInstancesOf(Ball.BLUE));
-		ballCountYellowLabel.setText("" + board.countInstancesOf(Ball.YELLOW));
 		ballCountGreenLabel.setText("" + board.countInstancesOf(Ball.GREEN));
+		if (game.getPlayers().length > 2) {
+			ballCountYellowLabel.setText("" + board.countInstancesOf(Ball.YELLOW));
+		} 
+		if (game.getPlayers().length > 3) {
+			ballCountBlueLabel.setText("" + board.countInstancesOf(Ball.BLUE));
+		}	
 	}
 		
 	private void setCursorIfChanged(Cursor cursor) {
@@ -449,14 +411,9 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 		}
 	}
 	
-	public void gameOver(Board board) {
-		if (board.hasWinner()) {
-			stateField.setText(game.getWinner().getName() + " has won the game!");
-			deactivateBoard();
-		} else {
-			stateField.setText("It's a draw.");
-		}
-		
+	public void gameOver(String messString) {
+		stateField.setText("\n" + messString);		
+		deactivateBoard();		
 	}
 	
 	private void activateBoard() {
@@ -525,6 +482,5 @@ public class GameUI extends JFrame implements ActionListener, PopupUI {
 		}
 
 	}
-	
 	
 }

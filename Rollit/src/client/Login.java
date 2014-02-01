@@ -5,7 +5,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Observable;
 
-import exceptions.ProtecolNotFollowedException;
+import clientAndServer.GlobalData;
+
+import exceptions.NotSameStateException;
+import exceptions.ProtocolNotFollowedException;
 
 public class Login extends Observable {
 	
@@ -21,9 +24,7 @@ public class Login extends Observable {
 	private String infoPortError = " , you did not type a valid port!";
 	private String infoLoginError1 = " , you typed a wrong password!\n" +
 			"If you are trying to create a new account, the username has already been taken.";
-	private String infoLoginError2 = " , the server does not respond (appropriately).\n" +
-			"Either the server is offline, or it uses a different communication protocol.";
-	
+
 	public Login() {
 		loginGUI = new LoginGUI(this);
 	}
@@ -53,7 +54,7 @@ public class Login extends Observable {
 		try {
 			c = new ServerCommunicator(name, adress, port);
 		} catch (IOException e) {
-			loginGUI.addPopup(infoTitle, name + infoLoginError2, true);
+			loginGUI.addPopup(infoTitle, name + GlobalData.ERR_CLIENT_CONNECTION, true);
 			e.printStackTrace();
 			return false;
 		}
@@ -68,8 +69,16 @@ public class Login extends Observable {
 				loginGUI.addPopup(infoTitle, name + infoLoginError1, true);
 				return false;
 			}
-		} catch (ProtecolNotFollowedException | IOException e) {
-			loginGUI.addPopup(infoTitle, name + infoLoginError2, true);
+		} catch (ProtocolNotFollowedException e) {
+			loginGUI.addPopup(infoTitle, name + GlobalData.ERR_PROTECOL, true);
+			e.printStackTrace();
+			return false;
+		} catch (IOException e) {
+			loginGUI.addPopup(infoTitle, name + GlobalData.ERR_CLIENT_CONNECTION, true);
+			e.printStackTrace();
+			return false;
+		} catch (NotSameStateException e) {
+			loginGUI.addPopup(infoTitle, name + GlobalData.ERR_STATE, true);
 			e.printStackTrace();
 			return false;
 		}

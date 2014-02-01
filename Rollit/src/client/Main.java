@@ -6,7 +6,8 @@ import java.util.Observer;
 
 import javax.jws.Oneway;
 
-import exceptions.ProtecolNotFollowedException;
+import exceptions.NotSameStateException;
+import exceptions.ProtocolNotFollowedException;
 
 /**
  * This is the heart of the client-side of the Rollit program. It is 
@@ -61,20 +62,27 @@ public class Main implements Observer {
 			}
 			mainUI.addPopup(subject, "The logout was succesfull", false);
 			login();
-		} catch (ProtecolNotFollowedException | IOException e) {
+		} catch (ProtocolNotFollowedException e) {
+			printPopupError(subject, e);
+			e.printStackTrace();
+		} catch (IOException e) {
+			printPopupError(subject, e);
+			e.printStackTrace();
+		} catch (NotSameStateException e) {
 			printPopupError(subject, e);
 			e.printStackTrace();
 		}
+
 	}
 	
 	public void join(int nrOfPlayers) {
 		mainUI.setVisible(false);
-		JoinGameSetup setup = new JoinGameSetup(this);	
+		JoinGameSetup setup = new JoinGameSetup(this, c);	
 	}
 
 	public void challenge() {
 		mainUI.setVisible(false);
-		ChallengeGameSetup setup = new ChallengeGameSetup(this);
+		ChallengeGameSetup setup = new ChallengeGameSetup(this, c);
 	}
 
 	public void offlineGame() {
@@ -116,7 +124,7 @@ public class Main implements Observer {
 	}
 	
 	private void printPopupError(String subject, Exception e) {
-		if (e instanceof ProtecolNotFollowedException) {
+		if (e instanceof ProtocolNotFollowedException) {
 			mainUI.addPopup(subject, subject + " unsuccessfull: server doesn't follow the protocol!", true);
 		} else if (e instanceof IOException) {
 			mainUI.addPopup(subject, "Logout unsuccessfull: server is offline!", true);

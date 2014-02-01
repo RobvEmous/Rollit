@@ -6,6 +6,7 @@ import game.OfflineGame;
 import game.GamePlayer;
 import game.HumanPlayer;
 import game.NaiveStrategy;
+import game.OnlineGame;
 import game.SmartStrategy;
 
 public class ChallengeGameSetup {
@@ -18,7 +19,7 @@ public class ChallengeGameSetup {
 	private ChallengeGameSetupUI ui;
 	private Main main;
 	
-	public ChallengeGameSetup(Main main) {
+	public ChallengeGameSetup(Main main, ServerCommunicator c) {
 		this.main = main;
 		ui = new ChallengeGameSetupUI(this);	
 		ui.setVisible(true);
@@ -26,7 +27,7 @@ public class ChallengeGameSetup {
 	
 	public void startGame(String[] players) {
 		ui.dispose();
-		OfflineGame game = new OfflineGame(namesToPlayers(players));
+		OnlineGame game = new OnlineGame(main, namesToPlayers(players));
 		game.start();
 	}
 	

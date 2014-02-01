@@ -7,10 +7,12 @@ import java.util.Observer;
 
 import clientAndServer.Ball;
 import clientAndServer.Board;
+import clientAndServer.GlobalSettings;
+
 import clientAndServer.Command;
 import clientAndServer.Commands;
 import exceptions.ClientTooSlowException;
-import exceptions.ProtecolNotFollowedException;
+import exceptions.ProtocolNotFollowedException;
 
 /**
  * Represents a server Player in the Rollit game.
@@ -19,34 +21,29 @@ import exceptions.ProtecolNotFollowedException;
 public class GamePlayer implements Observer {
 
     private Ball ball;
-    private int thinkTime;
     private ClientCommunicator client;
     private Command moveCommand = null;
     
-    /**
-     * Creates a new Player object.
-     * 
-     * @param name the name of the Player
-     * @param ball the Ball of the Player
-     */
-    public GamePlayer(Ball ball, int thinkTime, ClientCommunicator client) {
+	/**
+	 * Creates a new server-side game player object.
+	 * 
+	 * @param client the client this player is connected to
+	 * @param ball the Ball of the Player
+	 */
+    public GamePlayer(ClientCommunicator client, Ball ball) {
     	client.addObserver(this);
         this.ball = ball;
-        this.thinkTime = thinkTime;
     }
-
-    /**
-     * Returns the name of the player.
-     */
-   /* public String getName() {
-        return client;
-    }*/
 
     /**
      * Returns the ball of the player.
      */
     public Ball getBall() {
         return ball;
+    }
+    
+    public void sendchatMessage(String message) {
+    	client.
     }
 
     /**
@@ -55,15 +52,15 @@ public class GamePlayer implements Observer {
      * @param board the current board
      * @return the player's choice
      */
-    public Point determineMove(Board board) throws ClientTooSlowException, ProtecolNotFollowedException, IOException {
+    public Point determineMove(Board board) throws ClientTooSlowException, ProtocolNotFollowedException, IOException {
 		int counter = 0;
 		moveCommand = null;
 		client.yourTurn();
 		while (moveCommand == null) {
 			try {
-				Thread.sleep(ClientCommunicator.SLEEP_TIME);
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
 				counter++;
-				if (counter >= thinkTime / ClientCommunicator.SLEEP_TIME) {
+				if (counter >= GlobalSettings.THINK_TIME / GlobalSettings.SLEEP_TIME) {
 					throw new ClientTooSlowException();
 				}
 			} catch (InterruptedException e) {
@@ -76,20 +73,19 @@ public class GamePlayer implements Observer {
 			int y = Integer.parseInt(moveCommand.getArgs()[1]);
 			move = new Point(x,y);
 		} catch (NumberFormatException e) {
-			client.sendAck(Commands.COM_MOVE, Commands.COM_MOVE_B);
-			throw new ProtecolNotFollowedException();
+			client.sendAck(Commands.COM_MOVE, Commands.ANS_GEN_BAD);
+			throw new ProtocolNotFollowedException();
 		}
-		client.sendAck(Commands.COM_MOVE, Commands.COM_MOVE_G);
+		client.sendAck(Commands.COM_MOVE, Commands.ANS_GEN_GOOD);
 		return move;		
     }
-
 
     /**
      * Makes a move on the board.
      * 
      * @param board the current board
      */
-    public void makeMove(Board board) throws ClientTooSlowException, ProtecolNotFollowedException, IOException {
+    public void makeMove(Board board) throws ClientTooSlowException, ProtocolNotFollowedException, IOException {
         Point choice = determineMove(board);
         board.setField(choice, getBall());
     }

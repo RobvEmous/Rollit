@@ -9,7 +9,7 @@ import java.io.IOException;
  * @author Rob van Emous
  *
  */
-public class ClientNotFoundException extends Exception {
+public class ClientNotFoundException extends IOException {
 	private static final long serialVersionUID = 4036764230921915113L;
 
     public ClientNotFoundException() {

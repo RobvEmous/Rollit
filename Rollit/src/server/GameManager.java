@@ -6,7 +6,7 @@ import java.util.HashMap;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
-import exceptions.RepeatedActionException;
+import exceptions.NotSameStateException;
 
 /**
  * Class is thread-safe
@@ -20,14 +20,17 @@ public class GameManager {
 	
 	private HashMap<GamePlayer, Integer> waiters;
 	private HashMap<ServerGame, GamePlayer[]> games;
+	private ScoreRW scoreRW;
 	
 	private boolean stop = false;
 
 
-	public GameManager() {
+	public GameManager(Main main) {
 		waiters = new HashMap<GamePlayer, Integer>();
 		games = new HashMap<ServerGame, GamePlayer[]>();
-		gameCreator();
+		scoreRW = new ScoreRW();
+		//scoreRW.open();
+		//gameCreator();
 	}
 	
 	private void gameCreator() {
@@ -40,7 +43,7 @@ public class GameManager {
 						if (waiters.size() >= i) {
 							ServerGame game = new ServerGame(GamePlayers, GlobalSettings.THINK_TIME);
 							game.start();
-							games.put(game, );
+							//TODO games.put(game, );
 							moveToGamePlayers(Tools.getFirstP(GamePlayers, i));
 						}
 					}
@@ -58,13 +61,9 @@ public class GameManager {
 	 * @param GamePlayer the GamePlayer waiting to play a game.
 	 * @param nrOfGamePlayers the number of GamePlayers the GamePlayer wants to play 
 	 * with (including himself).
-	 * @throws RepeatedActionException
 	 */
-	public void addWaiter(GamePlayer GamePlayer, int nrOfGamePlayers) throws RepeatedActionException {
+	public void addWaiter(GamePlayer GamePlayer, int nrOfGamePlayers)  {
 		synchronized (waiters) {
-			if (waiters.containsKey(GamePlayer) || games.containsKey(GamePlayer)) {
-				throw new RepeatedActionException();
-			}
 			waiters.put(GamePlayer, nrOfGamePlayers);
 		}
 	}
@@ -78,8 +77,6 @@ public class GameManager {
 			removeWaiter(GamePlayer);
 		}
 	}
-	
-	
 	
 	public void removeWaiter(GamePlayer GamePlayer) {
 		synchronized (waiters) {
@@ -109,6 +106,10 @@ public class GameManager {
 			}
 		}
 		return GamePlayers;
+	}
+
+	public void shutDown() {
+		// TODO Auto-generated method stub		
 	}
 	
 }

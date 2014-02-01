@@ -69,7 +69,7 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 	
 	/** Constructs a LoginGUI object. */
 	public LoginGUI(Login login) {
-		super("Rollit Login");
+		super("Rolit Login");
 		this.login = login;
 		buildGUI();
 		setVisible(true);
@@ -98,6 +98,8 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 				addPopup("Help", 
 						"Fill in a username and password to login.\n" +
 						"If the username is unknown a new account will be created.\n" +
+						"If the server is not on your pc, you must supply another " +
+						"address.\n" +
 						"You can also play offline, this requires only a username.", false
 						);
 			}

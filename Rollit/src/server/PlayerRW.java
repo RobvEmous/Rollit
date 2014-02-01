@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 /**
- * <h1>Class for reading and writing save-files for the Rollit game.</h1>
+ * <h1>Class for reading and writing save-files for the Rolit game.</h1>
  * The class serves two mayor purposes:<br>
  * Firstly it can be used to manage
  * the accounts of Players and secondly it can be used to manage the 
@@ -33,6 +33,9 @@ public class PlayerRW {
 		players = new ArrayList<Player>();
 	}
 	
+	/**
+	 * This <b>must</b> be called first so the player-file can be read.
+	 */
 	public void open() {
 		if (file.exists()) {
 			readFile();
@@ -91,16 +94,33 @@ public class PlayerRW {
 			e.printStackTrace();
 		}
 	}
-
-	public boolean writeNewPlayer(Player p) {
-		for (Player player : players) {
-			if (player.getName().equalsIgnoreCase(p.getName())) {
-				return false;
+	
+	public boolean checkPlayerPass(Player p) {
+		if (hasPlayer(p)) {
+			for (Player player : players) {
+				if (player.getName().equals(p.getName())) {
+					return player.getPassword().equals(p);
+				}
 			}
 		}
-		players.add(p);
-		return true;
+		return false;
 	}
+	
+	public void writeNewPlayer(Player p) {
+		if (!hasPlayer(p)) {
+			players.add(p);
+		}
+	}
+	
+	public boolean hasPlayer(Player p) {
+		for (Player player : players) {
+			if (player.getName().equalsIgnoreCase(p.getName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	
 	public boolean changePassword(Player p, String oldPass, String newPass) {
 		return (p.getPassword().acceptable(newPass) && p.getPassword().setPassword(oldPass, newPass));

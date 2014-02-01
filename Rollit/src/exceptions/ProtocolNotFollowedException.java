@@ -1,7 +1,5 @@
 package exceptions;
 
-import java.io.IOException;
-
 /**
  * Signals that the server and client do not follow the same protocol. 
  * Probably because a request timed out or the answer of the client/server 
@@ -11,25 +9,25 @@ import java.io.IOException;
  * @author Rob van Emous
  *
  */
-public class ProtecolNotFollowedException extends Exception {
+public class ProtocolNotFollowedException extends Exception {
 	private static final long serialVersionUID = 2778268293915773778L;
 
 
-	public ProtecolNotFollowedException() {
+	public ProtocolNotFollowedException() {
         super();
     }
 
-    public ProtecolNotFollowedException(String message) {
+    public ProtocolNotFollowedException(String message) {
         super(message);
     }
 
 
-    public ProtecolNotFollowedException(String message, Throwable cause) {
+    public ProtocolNotFollowedException(String message, Throwable cause) {
         super(message, cause);
     }
 
 
-    public ProtecolNotFollowedException(Throwable cause) {
+    public ProtocolNotFollowedException(Throwable cause) {
         super(cause);
     }
 

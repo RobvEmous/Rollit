@@ -1,14 +1,15 @@
 package game;
 
 import java.awt.Point;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
 
-import client.OfflineGameSetup;
 import clientAndServer.Ball;
 import clientAndServer.Board;
+
+import client.Main;
+import client.OfflineGameSetup;
 
 /**
  * Class for maintaining the Rollit game.
@@ -16,7 +17,7 @@ import clientAndServer.Board;
  * @author Rob van Emous
  * @version 0.1
  */
-public class OfflineGame extends Observable {
+public class OfflineGame {
 	
 	/**
 	 * The offline game setup menu.
@@ -31,7 +32,7 @@ public class OfflineGame extends Observable {
     /**
      * The GUI of the game.
      */
-    private GameUI gameUI;
+    private OfflineGameUI gameUI;
 
     /**
      * The number of players of the game (2-4).
@@ -64,7 +65,7 @@ public class OfflineGame extends Observable {
     
     private int turnCounter = 0;
     
-    private int time = 0;
+    private int time = 1000;
     
     private String curr = "Current game situation:";
 
@@ -86,7 +87,7 @@ public class OfflineGame extends Observable {
         
         if (useUI) {
         	hasHuman = initHasHuman();
-        	gameUI = new GameUI(this);
+        	gameUI = new OfflineGameUI(this);
         }
         
     }
@@ -128,6 +129,7 @@ public class OfflineGame extends Observable {
             System.out.print(prompt);
             Scanner in = new Scanner(System.in);
             answer = in.hasNextLine() ? in.nextLine() : null;
+            in.close();
         } while (answer == null || (!answer.equals(yes) && !answer.equals(no)));
         return answer.equals(yes);
     }
@@ -224,7 +226,27 @@ public class OfflineGame extends Observable {
      */
     private void printResult() {
     	if (useUI) {
-    		gameUI.gameOver(board);
+    		String message = "";
+    		if (board.hasWinner()) {
+				GamePlayer winner = getWinner();
+				int points = board.countInstancesOf(winner.getBall());
+				message = winner.getName() + " has  won!\n" +
+						"He has got: " + points + " points.";	
+			} else {
+				ArrayList<GamePlayer> drawers = getDrawers();
+				int points = board.countInstancesOf(drawers.get(0).getBall());
+				message = "It is a draw between: \n";
+				if (drawers.size() == 2) {
+					message += drawers.get(0).getName() + " and \n";
+					message += drawers.get(1).getName() + ".\n";
+				} else {
+					message += drawers.get(0).getName() + ", \n";
+					message += drawers.get(0).getName() + " and \n";
+					message += drawers.get(2).getName() + ".\n";
+				}
+				message += "They have got: " + points + " points.";
+			}
+    		gameUI.gameOver(message);
     	} else {
             if (board.hasWinner()) {
                 GamePlayer winner = getPlayer(board.getWinner());
@@ -237,7 +259,7 @@ public class OfflineGame extends Observable {
     	}
 
     }
-    
+    	   
     private GamePlayer getPlayer(Ball b) {
     	for (int i = 0; i < nrOfPlayers; i++) {
     		if (players[i].getBall().equals(b)) {
@@ -261,6 +283,13 @@ public class OfflineGame extends Observable {
     	return player;
     }
     
+    public GamePlayer[] getPlayers() {
+    	return players;
+    }
+    
+    /**
+     * Returns the winning player or null if it is a draw.
+     */
     public GamePlayer getWinner() {
     	GamePlayer player = null;
     	Ball winner = board.getWinner();
@@ -270,6 +299,22 @@ public class OfflineGame extends Observable {
     		}
     	}
     	return player;
+    }
+    
+    /**
+     * Returns the 'drawing' players or null if a player has won.
+     */
+    public ArrayList<GamePlayer> getDrawers() {
+    	ArrayList<Ball> drawers = board.getDrawers();
+    	ArrayList<GamePlayer> drawingPlayers = new ArrayList<GamePlayer>();
+    	if (drawers != null) {
+	    	for (GamePlayer player : players) {
+	    		if (drawers.contains(player.getBall())) {
+	    			drawingPlayers.add(player);
+	    		}
+	    	}
+    	}
+    	return drawingPlayers;
     }
     
     public boolean hasHuman() {

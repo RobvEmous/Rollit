@@ -5,7 +5,8 @@ import game.GamePlayer;
 import java.util.HashMap;
 import java.util.Map;
 
-import clientAndServer.Board;
+import rest.Board;
+
 
 
 public class GameResult {

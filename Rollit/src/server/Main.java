@@ -1,45 +1,59 @@
 package server;
 
-import java.util.Observable;
-import java.util.Observer;
-
-import clientAndServer.GlobalSettings;
-
-public class Main implements Observer {
+public class Main {
 	
 	private MainUI mainGUI;
+	private ClientManager clientmanager;
+	private GameManager gameManager;
 	private Server server;
+	
+	private boolean started = false;
 	
 	public Main() {
 		mainGUI = new MainUI(this);
-		while (server == null) {
-			try {
-				Thread.sleep(GlobalSettings.SLEEP_TIME);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		server.
+		mainGUI.setVisible(true);
 	}
 	
-
-	public void exit() {
-		
+	/**
+	 * Stops the whole server-side of the Rolit game.
+	 */
+	public void stop() {
+		mainGUI.dispose();
+		if (started) {
+			stopListening();
+		}
+	}
+	
+	/**
+	 * Stops the server-side of the Rolit game, but the GUI remains so the
+	 * server can restart.
+	 */
+	public void stopListening() {
+		server.shutDown();
+		clientmanager.shutDown();
+		gameManager.shutDown();
 	}
 
-	@Override
-	public void update(Observable o, Object arg) {
-		
+	public void startListening(int port) {
+		gameManager = new GameManager(this);
+		clientmanager = new ClientManager(this, gameManager);
+		server = new Server(this, clientmanager, port);
+		server.start();	
+		started = true;
+	}
+	
+	public synchronized void addMessage(Object source, String message) {
+		if (source.equals(this)) {
+			mainGUI.addMainMessage(message);
+		} else if (source.equals(clientmanager)) {
+			mainGUI.addClientManagerMessage(message);
+		} else if (source.equals(gameManager)) {
+			mainGUI.addGameManagerMessage(message);
+		}
 	}
 	
 	public static void main(String[] args) {
 		Main main = new Main();
-	}
-
-
-	public void startServer(int portArg) {
-		server = new Server(this, portArg);
-		server.start();	
 	}
 
 }

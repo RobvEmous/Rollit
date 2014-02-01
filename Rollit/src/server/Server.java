@@ -1,83 +1,84 @@
 package server;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Observable;
 import java.util.Observer;
 
+import clientAndServer.GlobalSettings;
+
 /**
  * Server. A Thread class that listens to a socket connection on a 
  * specified port. For every socket connection with a Client, a new 
- * ClientHandler thread is started. 
+ * {@link ClientCommunicator} is created and this ClientCommunicator is 
+ * passed to the {@link ClientManager}. 
  * @author  Rob van Emous
- * @version v0.3
+ * @version v1.0
  */
-public class Server extends Thread implements Observer {
+public class Server extends Thread {
+	
+	private boolean stop = false;
+	private boolean stopped = false;
+	
 	private int port;
-	private Collection<ClientCommunicator> clients;
-
+	private ClientManager manager;
 
     /** Constructs a new Server object */
-	public Server(Main main, int portArg) {
-		port = portArg;
-		clients = new ArrayList<ClientCommunicator>();
+	public Server(Main main, ClientManager manager, int port) {
+		this.port = port;
+		this.manager = manager;
 	}
 
 	/**
-	 * Listens to a port of this Server if there are any Clients that 
-     * would like to connect. For every new socket connection a new
-     * ClientHandler thread is started that takes care of the further
-     * communication with the Client. 
+	 * Listens for Clients that would like to connect the port of this 
+	 * Server. For every socket connection with a Client, a new 
+	 * {@link ClientCommunicator} is created and this ClientCommunicator 
+	 * is passed to the {@link ClientManager}.
 	 */
 	public void run() {
 		ServerSocket socket = null;
 		try {
 			socket = new ServerSocket(port);
-			while (true) {
-				Socket s = socket.accept();
-				ClientCommunicator c = new ClientCommunicator(this, s); 
-				c.addObserver(this);
-				addHandler(c);				
+			socket.setSoTimeout(GlobalSettings.TIME_OUT);
+			while (!stop) {
+				try {
+					Socket s = socket.accept();
+					ClientCommunicator c = new ClientCommunicator(s); 
+					manager.addGuest(c);	
+				} catch (SocketTimeoutException e) {
+					// The timeout is only used so the server can be 
+					// stopped if necessary.
+				} catch (BindException e) {
+					stop = true;
+					e.printStackTrace();
+				}
 			}
+			socket.close();
+			stopped = true;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
-	/**
-	 * Sends a message using the collection of connected ClientHandlers
-         * to all connected Clients.
-	 * @param msg message that is send
-	 */
-	public synchronized void broadcast(String id, String args) {
-		//TODO add to this mainUI
-		for (ClientCommunicator client : clients) {
-		}
+	
+	public void shutDown() {
+		stop = true;
+		waitForStopped();
 	}
 
-	/**
-	 * Add a ClientHandler to the collection of ClientHandlers.
-	 * @param handler ClientHandler that will be added
-	 */
-	public void addHandler(ClientCommunicator handler) {
-		clients.add(handler);
-	}
-
-	/**
-	 * Remove a ClientHandler from the collection of ClientHanlders. 
-	 * @param handler ClientHandler that will be removed
-	 */
-	public synchronized void removeHandler(ClientHandler handler) {
-		clients.remove(handler);
-	}
-
-	@Override
-	public void update(Observable o, Object arg) {
-		// TODO Auto-generated method stub
-		
+	private void waitForStopped() {
+		while (!stopped) {
+			try {
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}	
 	}
 
 }

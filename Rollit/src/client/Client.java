@@ -111,7 +111,7 @@ public class Client extends Thread {
 			command.add(scanner.next());			
 		}
 		scanner.close();
-		return new Command(first, (String[])command.toArray());
+		return new Command(first, (String[])command.toArray(new String[command.size()]));
 	}
 	
 	/** send a message to a ClientHandler. */

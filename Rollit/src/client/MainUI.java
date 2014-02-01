@@ -194,9 +194,9 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 
 	public void setLoggedIn(boolean online) {
 		bJoin.setEnabled(online);
-		bChallenge.setEnabled(online);
-		bHighscores.setEnabled(online);
-		bOfflineGame.setEnabled(!online);
+		bChallenge.setEnabled(false); //TODO challenge not working yet
+		bHighscores.setEnabled(online);  //TODO highscores not working yet
+		bOfflineGame.setEnabled(true);
 	}
 	
 	public void toRightCorner() {

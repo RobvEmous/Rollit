@@ -42,6 +42,10 @@ public class Password {
 		return null;
 	}
 	
+	public boolean equals(Password p) {
+		return (p.getPass(ADMIN_PASS).equals(password));
+	}
+	
     public static void main(String[] args) {
         @SuppressWarnings("unused")
 		Password password = new Password();

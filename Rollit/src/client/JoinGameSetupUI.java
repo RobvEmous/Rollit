@@ -29,9 +29,11 @@ import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+import clientAndServer.GlobalData;
+import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
-public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListener {
+public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 	private static final long serialVersionUID = -1704679785722871219L;
 	
 	private static final Insets PADDING = new Insets(5, 5, 5, 5);
@@ -43,12 +45,12 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 	
 	private JoinGameSetup gameSetup;
 	
+	private boolean waitingForPlayers = false;
+	
 	private String[] choice = new String[4];
 	
-	private int numberOfPlayers = 2; 
-	
 	private Choice selectNrOfPlayers;
-	private Choice[] selectPlayers = new Choice[4];
+	private Choice selectPlayAs;
 	
 	private JButton startGame;
 	private JButton back;
@@ -62,11 +64,10 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 				((JoinGameSetupUI) e.getWindow()).close();
 			}
 		});
-		setUp(2);	
 	}
 	
 	public void close() {
-		gameSetup.goBack();
+		gameSetup.goBack(false);
 	}
 
 	private void buildGUI() {
@@ -77,12 +78,12 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 		JPanel fullPanel = new JPanel(new FlowLayout());
 		JPanel panels = new JPanel(new GridBagLayout());
 		JPanel panelNrOfPlayers = new JPanel(new GridLayout(2, 0));
-		JPanel panelPlayers = new JPanel(new GridLayout(5, 0));
+		JPanel panelPlayAs = new JPanel(new GridLayout(2, 0));
 		JPanel panelButton = new JPanel(new GridLayout(2, 0));
 		
 		GridBagConstraints panelNrOfPlayersC = new GridBagConstraints(
 				0, 0, 2, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
-		GridBagConstraints panelPlayersC = new GridBagConstraints(
+		GridBagConstraints panelPlayAsC = new GridBagConstraints(
 				0, 2, 2, 5, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
 		GridBagConstraints panelButtonC = new GridBagConstraints(
 				0, 7, 2, 2, 1D, 1D, GridBagConstraints.CENTER, 0, PADDING, 0, 0);
@@ -93,10 +94,17 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 		selectNrOfPlayers.add("2");
 		selectNrOfPlayers.add("3");
 		selectNrOfPlayers.add("4");
-		selectNrOfPlayers.addItemListener(this);
 		
 		panelNrOfPlayers.add(lbNrOfPlayers);
 		panelNrOfPlayers.add(selectNrOfPlayers);
+		
+		// create play-as panel
+		JLabel lbPlayAs = new JLabel("Play as: ");
+		selectPlayAs = new Choice();
+		addPlayers(selectPlayAs);
+		
+		panelPlayAs.add(lbPlayAs);
+		panelPlayAs.add(selectPlayAs);
 		
 		// create button panel
 		startGame = new JButton("Join game");
@@ -108,30 +116,15 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 		panelButton.add(back);
 		
 		panels.add(panelNrOfPlayers, panelNrOfPlayersC);
+		panels.add(panelPlayAs, panelPlayAsC);
 		panels.add(panelButton, panelButtonC);
 		fullPanel.add(panels);
 		add(fullPanel);
 		
 	}
 
-	private void setUp(int nrOfPlayers) {
-		for (int i = 0; i < nrOfPlayers; i++) {
-			selectPlayers[i].setEnabled(true);
-		}
-		for (int i = nrOfPlayers; i < 4; i++) {
-			selectPlayers[i].setEnabled(false);
-		}
-		numberOfPlayers = nrOfPlayers;
-	}
-	
-	private void addAllPlayers(Choice[] cs) {
-		for (Choice c : cs) {
-			addPlayers(c);
-		}
-	}
-	
 	private void addPlayers(Choice c) {
-		for (String s : gameSetup.playersKinds) {
+		for (String s : GlobalData.PLAYERS) {
 			c.add(s);
 		}
 	}
@@ -139,34 +132,42 @@ public class JoinGameSetupUI extends JFrame implements ActionListener, ItemListe
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getSource().equals(back)) {
-			close();
-		} else if (e.getSource().equals(startGame)) {
-			String[] finalChoice = new String[numberOfPlayers];
-			for (int i = 0; i < numberOfPlayers; i++) {
-				finalChoice[i] = selectPlayers[i].getSelectedItem();
+			if (!waitingForPlayers) {
+				close();
+			} else {
+				back.setEnabled(false);	
+				gameSetup.disjoinGame();
+				startGame.setEnabled(true);	
+				setJoined(false);
+				startGame.setEnabled(true);
+				waitingForPlayers = false;
 			}
-			gameSetup.startGame(finalChoice);
+		} else if (e.getSource().equals(startGame)) {
+			int numberOfPlayers = Integer.parseInt(selectNrOfPlayers.getSelectedItem());
+			String playerChoice = selectPlayAs.getSelectedItem();
+			startGame.setEnabled(false);	
+			back.setEnabled(false);	
+			gameSetup.joinGame(playerChoice, numberOfPlayers);
+			setJoined(true);
+			back.setEnabled(true);	
+			waitingForPlayers = true;
+		}
+	}
+
+	public void setJoined(boolean join) {
+		if (join) {
+			back.setText("Disjoin");
+		} else {
+			back.setText("Back to main");
 		}
 	}
 
 	@Override
-	public void itemStateChanged(ItemEvent e) {
-		if (e.getSource().equals(selectNrOfPlayers)) {
-			String item = selectNrOfPlayers.getSelectedItem();
-			setUp(Integer.parseInt(item));
+	public synchronized void addPopup(String title, String message, boolean warning) {
+		if (!warning) {
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
 		} else {
-			for (int i = 0; i < numberOfPlayers; i++) {
-				if (e.equals(selectPlayers[i]))	{
-					choice[1] = selectPlayers[i].getSelectedItem();
-				}
-			}
-		}
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+		}	
 	}
-	
-	public static void main(String[] args) {
-		JoinGameSetupUI ui = new JoinGameSetupUI(new JoinGameSetup(new Main()));
-		ui.setVisible(true);
-	}
-	
-	
 }

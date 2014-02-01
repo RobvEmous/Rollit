@@ -79,5 +79,24 @@ public class Tools {
 		}
 		return string + args[args.length - 1];
 	}
+	
+	public static String[] removeOne(String[] all, String theOne) {
+		ArrayList<String> rest = new ArrayList<String>();
+		for (String one : all) {
+			if (!one.equals(theOne)) {
+				rest.add(one);
+			}
+		}
+		return (String[])rest.toArray();
+	}
+	
+	public static <V> ArrayList<V> addOneToStart(V[] allButOne, V theOne) {
+		ArrayList<V> all = new ArrayList<V>();
+		all.add(theOne);
+		for (V one : allButOne) {
+			all.add(one);
+		}
+		return all;
+	}
 
 }

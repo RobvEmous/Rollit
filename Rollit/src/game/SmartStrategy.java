@@ -6,6 +6,7 @@ import java.util.*;
 import clientAndServer.Ball;
 import clientAndServer.Board;
 
+
 public class SmartStrategy implements Strategy {
 
 	private String name = "Smart"; 

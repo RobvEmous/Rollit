@@ -12,15 +12,24 @@ import javax.swing.JButton;
 
 public class FieldListener implements ActionListener {
 	
-	private GameUI targetGUI;
+	private OfflineGameUI targetGUI;
+	private OnlineGameUI targetGUI2;
+	/**
+	 * The constructor of this listener assigns the specified GUI as the GUI on which
+	 * this listener acts
+	 * @param g The GUI to act on
+	 */
+	public FieldListener(OfflineGameUI g) {
+		targetGUI = g;
+	}
 	
 	/**
 	 * The constructor of this listener assigns the specified GUI as the GUI on which
 	 * this listener acts
 	 * @param g The GUI to act on
 	 */
-	public FieldListener(GameUI g) {
-		targetGUI = g;
+	public FieldListener(OnlineGameUI g) {
+		targetGUI2 = g;
 	}
 	
 	/**
@@ -32,7 +41,12 @@ public class FieldListener implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		JButton pressedButton = (JButton) e.getSource();
-		targetGUI.fieldUsed(pressedButton);
+		if (targetGUI == null) {
+			targetGUI2.fieldUsed(pressedButton);
+		} else {
+			targetGUI.fieldUsed(pressedButton);
+		}
+		
 	}
 
 }
