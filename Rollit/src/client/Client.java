@@ -98,6 +98,9 @@ public class Client extends Thread {
 				e.printStackTrace();
 			}
 		}
+		if (stop && line == null) {
+			line = "";
+		}
 		return line;
 	}
 	

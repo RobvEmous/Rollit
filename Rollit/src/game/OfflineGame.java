@@ -63,6 +63,8 @@ public class OfflineGame {
     
     private boolean useUI = true;
     
+    private boolean stop = false;
+    
     private int turnCounter = 0;
     
     private int time = 1000;
@@ -98,13 +100,12 @@ public class OfflineGame {
      * the user does not want to play anymore.
      */
     public void start() {
-        boolean stop = false;
         while (!stop) {
             reset();
             play();
-            if (useUI) {
+            if (!stop && useUI) {
             	stop = gameUI.readQuestionPopup("Game Over", "Play again?");
-            } else {
+            } else if (!stop) {
             	stop = !readBoolean("\n> Play another time? (y/n)?", "y", "n");
             }
         }
@@ -163,7 +164,7 @@ public class OfflineGame {
      * After each move, the changed game situation is printed.
      */
     private void play() {
-        while (!board.gameOver()) {
+        while (!stop && !board.gameOver()) {
         	updateScreen();   
         	if (!useUI) {
         		hasTurn(players[current]);   
@@ -179,8 +180,10 @@ public class OfflineGame {
        		}    	              
         	nextCurrent();
         }
-        updateScreen();
-        printResult();
+        if (!stop) {
+            updateScreen();
+            printResult();
+        }
     }
 
 
@@ -336,7 +339,8 @@ public class OfflineGame {
     }
     
 	public void goBack() {
-		gameUI.dispose();
+		stop = true;
+		gameUI.dispose();		
 		setup.returnFromAction();
 	}
 

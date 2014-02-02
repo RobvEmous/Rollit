@@ -32,6 +32,7 @@ public class GamePlayer {
 	 */
     public GamePlayer(String name, ClientCommunicator client, Ball ball) {
     	this.name = name;
+    	this.client = client;
         this.ball = ball;
     }
     

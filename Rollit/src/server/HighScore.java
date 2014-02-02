@@ -27,4 +27,9 @@ public class HighScore {
 	public HashMap<GamePlayer, Integer> getScores() {
 		return scores;
 	}
+
+	public String getResult() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

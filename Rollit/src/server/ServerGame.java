@@ -30,13 +30,8 @@ public class ServerGame extends Observable implements Observer {
     /**
      * The player of the game.
      */
-    private ArrayList<ClientCommunicator> players;
-    
-    /*
-     * The score-writer object to be able to save the scores
-     */
-    private ScoreRW scores;
-    
+    private ArrayList<GamePlayer> players;
+      
     /**
      * Index of the current player.
      */
@@ -56,23 +51,16 @@ public class ServerGame extends Observable implements Observer {
      */
     public ServerGame(ArrayList<GamePlayer> players) {
     	this.players = players;
-    	this.scores = scores;
     	nrOfPlayers = players.size();
-    	this.players = players;
+    	Board board = new Board();
         board.setInitial();
     }
     
 	/**
      * Starts the online Rolit game. <br>
-     * First the initial board is shown (the four center balls have
-     * already been set).<br> Then the game is played until the server
-     * signals the game is over.<br> 
-     * After each move, the changed game situation is printed.
      */
     private void start() {
-    	for (GamePlayer player : players) {
-    		player.add
-    	}
+
     }
 
 	/**
@@ -299,65 +287,10 @@ public class ServerGame extends Observable implements Observer {
 		}
 	}
 	
-	private void gameOver() throws ProtocolNotFollowedException {
-		Board tempBoard = board.deepCopy();
-		removeQuitersFromBoard(tempBoard);
-		String message = "";
-		if (tempBoard.gameOver()) {
-			if (tempBoard.hasWinner()) {
-				GamePlayer winner = getWinner();
-				int points = tempBoard.countInstancesOf(winner.getBall());
-				if (winner.equals(clientPlayer)) {
-					message = ", you have won!\n" +
-							"You have got: " + points + " points.";	
-				} else  {	
-					message = ", you have lost :(\n" +
-							winner.getName() + " has won\n" +
-							"He has got: " + points + " points.";	
-				}
-			} else {
-				ArrayList<GamePlayer> drawers = getDrawers();
-				int points = tempBoard.countInstancesOf(drawers.get(0).getBall());
-				if (drawers.contains(clientPlayer)) {
-					message = ", you have a draw-win with: \n";
-					if (drawers.size() == 2) {
-						for (GamePlayer player : drawers) {
-							if (!player.equals(clientPlayer)) {
-								message += player.getName() + ".\n";
-							}
-						}
-					} else {
-						if (!drawers.get(0).equals(clientPlayer)) {
-							message += drawers.get(0).getName() + " and\n";
-							if (!drawers.get(1).equals(clientPlayer)) {
-								message += drawers.get(1).getName() + ".\n";
-							} else {
-								message += drawers.get(2).getName() + ".\n";
-							}
-						} else {
-							message += drawers.get(1).getName() + " and\n";
-							message += drawers.get(2).getName() + ".\n";
-						}
-					}
-					message += "You all have got: " + points + " points.";	
-				} else  {
-					message += ", you have draw-lost to: ";
-					if (drawers.size() == 2) {
-						message += drawers.get(0).getName() + " and ";
-						message += drawers.get(1).getName() + ".";
-					} else {
-						message += drawers.get(0).getName() + ", ";
-						message += drawers.get(0).getName() + " and ";
-						message += drawers.get(2).getName() + ".";
-					}
-				}
-			}
-		} else {
-			throw new ProtocolNotFollowedException();
+	private void gameOver() {
+		for (GamePlayer player : players) {
+			player.deleteObserver(this);
 		}
-		gameUI.addPopup("Game over", main.getClientName() + message, false);
-		gameUI.gameOver(main.getClientName() + message);
-		
 	}
 
 	private Board removeQuitersFromBoard(Board tempBoard) {

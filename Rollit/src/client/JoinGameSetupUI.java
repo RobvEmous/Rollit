@@ -1,8 +1,5 @@
 package client;
 
-import game.GamePlayer;
-import game.HumanPlayer;
-
 import java.awt.Choice;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -13,24 +10,16 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.jws.Oneway;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPasswordField;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 
 import clientAndServer.GlobalData;
-import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
 public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
@@ -46,8 +35,6 @@ public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 	private JoinGameSetup gameSetup;
 	
 	private boolean waitingForPlayers = false;
-	
-	private String[] choice = new String[4];
 	
 	private Choice selectNrOfPlayers;
 	private Choice selectPlayAs;
@@ -67,6 +54,9 @@ public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 	}
 	
 	public void close() {
+		if (waitingForPlayers) {
+			gameSetup.disjoinGame();
+		}
 		gameSetup.goBack(false);
 	}
 
@@ -141,6 +131,8 @@ public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 				setJoined(false);
 				startGame.setEnabled(true);
 				waitingForPlayers = false;
+				back.setEnabled(true);	
+				
 			}
 		} else if (e.getSource().equals(startGame)) {
 			int numberOfPlayers = Integer.parseInt(selectNrOfPlayers.getSelectedItem());
@@ -157,8 +149,12 @@ public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 	public void setJoined(boolean join) {
 		if (join) {
 			back.setText("Disjoin");
+			selectNrOfPlayers.setEnabled(false);
+			selectPlayAs.setEnabled(false);
 		} else {
 			back.setText("Back to main");
+			selectNrOfPlayers.setEnabled(true);
+			selectPlayAs.setEnabled(true);
 		}
 	}
 

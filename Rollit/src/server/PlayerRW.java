@@ -27,7 +27,7 @@ public class PlayerRW {
 	
 	private static final String ADMIN_PASS = "verysafe";	
 	private String filePath = "files\\";
-	private String fileName = "ppwdd.dat"; // player password data
+	private String fileName = "players.dat"; // player password data
 	private File file;
 	
 	private FileWriter out;

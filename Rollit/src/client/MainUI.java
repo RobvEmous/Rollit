@@ -124,8 +124,10 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 		bJoin = new JButton("Play a game");	
 		bJoin.addActionListener(this);		
 		bChallenge = new JButton("Challenge friends");	
+		bChallenge.setToolTipText("Not implemented");
 		bChallenge.addActionListener(this);	
 		bHighscores = new JButton("Highscores");	
+		bHighscores.setToolTipText("Not implemented");
 		bHighscores.addActionListener(this);
 		
 		pOnline.add(bJoin);
@@ -195,7 +197,7 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 	public void setLoggedIn(boolean online) {
 		bJoin.setEnabled(online);
 		bChallenge.setEnabled(false); //TODO challenge not working yet
-		bHighscores.setEnabled(online);  //TODO highscores not working yet
+		bHighscores.setEnabled(false);  //TODO highscores not working yet
 		bOfflineGame.setEnabled(true);
 	}
 	

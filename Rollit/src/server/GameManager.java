@@ -1,6 +1,7 @@
 package server;
 
 import java.io.IOException;
+import java.security.AllPermission;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
@@ -32,16 +33,17 @@ public class GameManager implements Observer {
 	private ClientManager clientManager;
 	private ScoreRW scoreRW;
 	
-	private String waiterAdded = "Waiter added: ";
-	private String waitersUpgraded = "Waiters started playing: ";
-	private String waiterKicked = "Waiter kicked: ";
-	private String waiterDisconnected= "Waiter disconnected: ";
-	private String waiterDisjoined= "Waiter disjoined: ";
+	private String waiterAdded = "Got client from ClientManager: ";
+	private String waiterKicked = "Client kicked: ";
+	private String waiterDisconnected= "Client disconnected: ";
+	private String waiterDisjoined= "Client disjoined: ";
 	private String gameStarted = "Game started with: ";
 	private String gameStopped = "Game stopped with: ";
 	private String playerStopped = "Player rage-quited: ";
 	private String playerKicked = "Player kicked: ";
 	private String playerDisconnected = "Player disconnected: ";
+	private String allWaitersRemoved = "All waiters removed.";
+	private String allGamesStopped = "All waiters removed.";
 	
 	private boolean stop = false;
 	
@@ -57,6 +59,7 @@ public class GameManager implements Observer {
 	}
 	
 	private void gameCreator() {
+		final GameManager gm = this;
 		Thread gameCreator = new Thread(new Runnable() {		
 			@Override
 			public void run() {
@@ -67,14 +70,27 @@ public class GameManager implements Observer {
 							players = Tools.getFirstP(players, i);
 							ArrayList<GamePlayer> gamePlayers = convertToGamePlayers(players);
 							sendMessage(gameStarted + Tools.ArrayListToString(players));
-							ServerGame game = new ServerGame(gamePlayers);
-							
-							game.addObserver(this);
-							game.start();
+							createNewGame(gamePlayers, gm);
 						}
 					}
-					Thread.sleep(20);
+					try {
+						Thread.sleep(GlobalSettings.SLEEP_TIME);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
+			}
+
+			private void createNewGame(final ArrayList<GamePlayer> gamePlayers, final GameManager gm) {
+				Thread newGame = new Thread(new Runnable() {			
+					@Override
+					public void run() {
+						ServerGame game = new ServerGame(gamePlayers);
+						game.addObserver(gm);
+						//game.start();
+					}
+				});
+				newGame.start();				
 			}
 
 			private ArrayList<GamePlayer> convertToGamePlayers(
@@ -100,13 +116,15 @@ public class GameManager implements Observer {
 	 * @param nrOfGamePlayers the number of GamePlayers the GamePlayer wants to play 
 	 * with (including himself).
 	 */
-	public void addWaiter(ClientCommunicator client, Player player, int nrOfGamePlayers)  {
+	public void addWaiter(ClientCommunicator client, String clientName, int nrOfGamePlayers)  {
 		synchronized (waitersName) {
 			synchronized (waitersGameKind) {
-				waitersName.put(client, player.getName());
+				waitersName.put(client, clientName);
 				waitersGameKind.put(client, nrOfGamePlayers);
 			}
 		}
+		client.addObserver(this);
+		sendMessage(waiterAdded + waiterInfo(client));
 	}
 	
 	public void addQuitter(GamePlayer player)  {
@@ -125,9 +143,13 @@ public class GameManager implements Observer {
 		sendToClientManager(player);
 	}
 	
-	private void sendToClientManager(GamePlayer player) {
-		// TODO Auto-generated method stub
+	public void sendToClientManager(GamePlayer player) {
+		sendToClientManager(player.getClient(), player.getName());
 		
+	}
+	
+	private void sendToClientManager(ClientCommunicator client, String clientName) {
+		clientManager.addClient(client, clientName);	
 	}
 
 	/**
@@ -201,15 +223,17 @@ public class GameManager implements Observer {
 	
 	public void shutDown() {
 		stop = true;
-		scoreRW.close();	
+		//scoreRW.close();	
 		for (ClientCommunicator client : waitersName.keySet()) {
 			client.deleteObserver(this);
 			client.shutdown();
 		}
+		sendMessage(allWaitersRemoved);
 		for (ServerGame game : games) {
 			game.deleteObserver(this);
 			game.shutdown();
 		}
+		sendMessage(allGamesStopped);
 	}
 
 	@Override
@@ -229,9 +253,11 @@ public class GameManager implements Observer {
 			Command comm = (Command) arg;
 			if  (comm.getId().equals(Commands.COM_DISJOIN)) {
 				try {
+					sendToClientManager(client, waitersName.get(client));
+					removeWaiter(client, 2);
 					client.sendAck(comm.getId(), Commands.ANS_GEN_GOOD);
 				} catch (IOException e) {
-					
+					removeWaiter(client, 1);
 					e.printStackTrace();
 				}
 			} else {
@@ -244,7 +270,13 @@ public class GameManager implements Observer {
 			}
 		} else if (game != null && games.contains(o)) {
 			HighScore highScore = (HighScore) arg;
-			scoreRW.addHighScore(highScore);
+			//scoreRW.addHighScore(highScore);
+			if (highScore != null) {
+				sendMessage(gameStopped + highScore.getResult());
+			} else {
+				sendMessage(gameStopped);
+			}
+			
 		}
 		
 	}

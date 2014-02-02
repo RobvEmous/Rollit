@@ -31,14 +31,14 @@ import exceptions.ProtocolNotFollowedException;
  * join again.
  * 
  * @author Rob van Emous
- * @version 0.3
+ * @version 1.0
  */
 public class ClientManager implements Observer {
 	/**
 	 * Stores authenticated clients who can start playing a game or ask 
 	 * for certain high-scores.
 	 */
-	private HashMap<ClientCommunicator, Player> clients;
+	private HashMap<ClientCommunicator, String> clients;
 	
 	/**
 	 * Stores unauthenticated clients and the time they joined so they can
@@ -74,13 +74,13 @@ public class ClientManager implements Observer {
 	private String guestUpgraded = "Guest logged in: ";
 	private String guestKicked = "Guest kicked: ";
 	private String guestTimeOut = "Guest timed out: ";
-	private String guestDisconnected = "Guest disconnected: ";
 	private String allGuestsRemoved = "All guests removed";
 	private String clientDowngraded= "Client logged out: ";
 	private String clientKicked = "Client kicked: ";
 	private String clientDisconnected = "Guest disconnected: ";
 	private String allClientsRemoved = "All clients removed";
 	private String clientToGame = "Client send to GameManager: ";
+	private String clientFromGame = "Client got from GameManager: ";
 	
 	/**
 	 * Starts a client manager.
@@ -88,21 +88,20 @@ public class ClientManager implements Observer {
 	 * @param gameManager used to send authenticated players who want to 
 	 * play a game to the game 'waiting room'. 
 	 */
-	public ClientManager(Main main, GameManager gameManager) {
+	public ClientManager(Main main) {
 		this.main = main;	
-		clients = new HashMap<ClientCommunicator, Player>();
+		clients = new HashMap<ClientCommunicator, String>();
 		guests = new HashMap<ClientCommunicator, Long>();
 		playerRW = new PlayerRW();
 		playerRW.open();
 		scoreRW = new ScoreRW();
 		//scoreRW.open();		
 		gameManager = new GameManager(main, this, scoreRW);
-		this.gameManager = gameManager;
+		main.setGameManager(gameManager);
 		startInactiveGuestRemover();
 	}
 	
 	private void startInactiveGuestRemover() {
-		final ClientManager cm = this;   
 		Thread remover = new Thread(new Runnable() {			
 			@Override
 			public void run() {
@@ -153,14 +152,22 @@ public class ClientManager implements Observer {
 		guest.addObserver(this);		
 	}
 	
-	private void upgradeGuest(ClientCommunicator guest, Player guestPlayer) {
+	private void upgradeGuest(ClientCommunicator guest, String guestName) {
 		synchronized (guests) {
 			guests.remove(guest);
 		}
 		synchronized (clients) {
-			clients.put(guest, guestPlayer);
+			clients.put(guest, guestName);
 		}
 		sendMessage(guestUpgraded + clientInfo(guest));
+	}
+	
+	public void addClient(ClientCommunicator client, String name) {
+		sendMessage(clientFromGame + clientInfo(client));
+		synchronized (clients) {
+			clients.put(client, name);
+		}		
+
 	}
 	
 	private void downgradeClient(ClientCommunicator client) {
@@ -273,7 +280,7 @@ public class ClientManager implements Observer {
 	}
 	
 	private String clientInfo(ClientCommunicator client) {
-		return clients.get(client).getName() + " - " + client.toString();
+		return clients.get(client) + " - " + client.toString();
 	}
 	
 	private String guestInfo(ClientCommunicator guest) {
@@ -381,12 +388,12 @@ public class ClientManager implements Observer {
 			Player player = new Player(name, pass);
 			if (playerRW.hasPlayer(player)) {
 				if (playerRW.checkPlayerPass(player)) {
-					upgradeGuest(client, player);
+					upgradeGuest(client, player.getName());
 					return true;
 				}
 			} else {
 				playerRW.writeNewPlayer(player);
-				upgradeGuest(client, player);
+				upgradeGuest(client, player.getName());
 				return true;
 			}
 		} else {

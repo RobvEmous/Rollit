@@ -44,7 +44,7 @@ public class JoinGameSetup implements Observer {
 		this.choice = choice;
 		try {
 			c.join(nrOfPlayers);
-			ui.addPopup(infoTitle, main.getClientName() + GlobalData.MSG_WAITING_J, true);
+			ui.addPopup(infoTitle, main.getClientName() + GlobalData.MSG_WAITING_J, false);
 		} catch (ProtocolNotFollowedException e) {
 			ui.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
 			goBack(false);
@@ -64,7 +64,7 @@ public class JoinGameSetup implements Observer {
 		String infoTitle = "Disjoin game";
 		try {
 			c.disjoin();
-			ui.addPopup(infoTitle, main.getClientName() + GlobalData.MSG_WAITING_J, true);
+			ui.addPopup(infoTitle, main.getClientName() + GlobalData.MSG_WAITING_J, false);
 		} catch (ProtocolNotFollowedException e) {
 			ui.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
 			goBack(false);

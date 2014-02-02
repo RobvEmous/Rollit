@@ -1,13 +1,8 @@
 package server;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
-
-import clientAndServer.GlobalSettings;
 
 import exceptions.PortInUseException;
 
@@ -56,10 +51,14 @@ public class Main {
 		} catch (IOException e) {
 			throw new PortInUseException();
 		} 
-		clientmanager = new ClientManager(this, gameManager);
+		clientmanager = new ClientManager(this);
 		server = new Server(this, clientmanager, socket);
 		server.start();	
 		started = true;
+	}
+	
+	public void setGameManager(GameManager gameManager) {
+		this.gameManager = gameManager;
 	}
 
 	public synchronized void addMessage(Object source, String message) {
@@ -73,6 +72,7 @@ public class Main {
 	}
 	
 	public static void main(String[] args) {
+		@SuppressWarnings("unused")
 		Main main = new Main();
 	}
 
