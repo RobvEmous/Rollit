@@ -12,26 +12,12 @@ import clientAndServer.GlobalData;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Password;
 import exceptions.ProtocolNotFollowedException;
+import java.util.*;
 
 /**
- * Class used for managing clients.<br>
- * The managed clients do not need to be logged in, but only clients who 
- * are logged in are able to join games or receive high-scores.<br>
- * At all times this server tries to be in the same state as the client
- * by responding to requests adequately. This is also requested from the
- * client. When a client is not able to do this he will be kicked:<br>
- * For example when a client sends game related commands while not playing
- * a game, like chat-messages or moves.<br>
- * Non-logged in clients will be kicked when trying to perform anything
- * else than logging in and these clients will also be removed after a
- * while. Because of that, clients should immediately try to log in after 
- * establishing a connection with the server.<br>
- * When clients log out their {@link ClientCommunicator} will be shut down 
- * and destroyed, so they have to reconnect and re-login when they want to
- * join again.
- * 
- * @author Rob van Emous
- * @version 1.0
+ * Class used for managing clients.<br> The managed clients do not need to be logged in, but only clients who  are logged in are able to join games or receive high-scores.<br> At all times this server tries to be in the same state as the client by responding to requests adequately. This is also requested from the client. When a client is not able to do this he will be kicked:<br> For example when a client sends game related commands while not playing a game, like chat-messages or moves.<br> Non-logged in clients will be kicked when trying to perform anything else than logging in and these clients will also be removed after a while. Because of that, clients should immediately try to log in after  establishing a connection with the server.<br> When clients log out their                 {@link ClientCommunicator}         will be shut down and destroyed, so they have to reconnect and re-login when they want to join again.
+ * @author         Rob van Emous
+ * @version         1.0
  */
 public class ClientManager implements Observer {
 	/**
@@ -88,6 +74,10 @@ public class ClientManager implements Observer {
 	 * @param gameManager used to send authenticated players who want to 
 	 * play a game to the game 'waiting room'. 
 	 */
+	/*@
+	  requires main != null;
+	  ensures this != null;
+	 */
 	public ClientManager(Main main) {
 		this.main = main;	
 		clients = new HashMap<ClientCommunicator, String>();
@@ -143,6 +133,9 @@ public class ClientManager implements Observer {
 	 * 
 	 * @param guest ClientHandler that will be added
 	 */
+	/*@
+	  requires guest != null;
+	 */
 	public void addGuest(ClientCommunicator guest) {
 		long startTime = System.currentTimeMillis();
 		synchronized (guests) {
@@ -162,6 +155,9 @@ public class ClientManager implements Observer {
 		sendMessage(guestUpgraded + clientInfo(guest));
 	}
 	
+	/*@
+	  requires client != null && name != null;
+	 */
 	public void addClient(ClientCommunicator client, String name) {
 		sendMessage(clientFromGame + clientInfo(client));
 		synchronized (clients) {
@@ -300,7 +296,10 @@ public class ClientManager implements Observer {
 		removeAllClients();
 		playerRW.close();
 	}
-
+	
+	/*@
+	  requires o != null; 
+	*/
 	@Override
 	public void update(Observable o, Object arg) {
 		Command comm = (Command) arg;

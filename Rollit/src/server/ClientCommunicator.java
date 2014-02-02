@@ -8,22 +8,23 @@ import clientAndServer.Command;
 import clientAndServer.Commands;
 import clientAndServer.GlobalSettings;
 import exceptions.ProtocolNotFollowedException;
+import java.util.*;
+import java.net.*;
 
 /**
- * This class is the protocol-layer above the standard ClientHandler<br> 
- * It is able to send all supported commands and waits for an 
- * 'Ack'-command from the client. To be able to read commands from the 
- * client any class can observe this class and will be updated if a 
- * command is received.
- * @author Rob van Emous
- * @version 1.0
+ * This class is the protocol-layer above the standard ClientHandler<br>  It is able to send all supported commands and waits for an  'Ack'-command from the client. To be able to read commands from the  client any class can observe this class and will be updated if a  command is received.
+ * @author  Rob van Emous
+ * @version  1.0
  */
 public class ClientCommunicator extends Observable {
 		
 	private ClientHandler clientHandler;
 	
 	private boolean stop = false;
-	
+	/*@
+	  requires sockArg != null;
+	  ensures this != null;
+	 */
 	public ClientCommunicator(Socket sockArg) throws IOException {
 		clientHandler = new ClientHandler(sockArg);
 		clientHandler.start();
@@ -65,6 +66,9 @@ public class ClientCommunicator extends Observable {
 	 * accepted or not
 	 * @throws IOException
 	 */
+	/*@
+	  requires id != null;
+	 */
 	public synchronized void sendAck(String id, String arg) throws IOException {
 		String[] args = {arg};
 		clientHandler.sendCommand(id + Commands.COM_ACK, args);
@@ -80,6 +84,9 @@ public class ClientCommunicator extends Observable {
 	 * @param players the players of the new game
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
+	 */
+	/*@
+	  requires players != null;
 	 */
 	public void newGame(String[] players) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -112,6 +119,9 @@ public class ClientCommunicator extends Observable {
 	 * @param message the chat message
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
+	 */
+	/*@
+	  requires message != null;
 	 */
 	public void message(String message) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -148,6 +158,9 @@ public class ClientCommunicator extends Observable {
 	 * @param y the y-coordinate of the move
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
+	 */
+	/*@
+	  requires playerName != null && 0 <= x && 0 <= y;
 	 */
 	public void update(String playerName, int x, int y) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -216,6 +229,9 @@ public class ClientCommunicator extends Observable {
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
 	 */
+	/*@
+	  requires 0 <= x && 0 <= y;
+	 */
 	public void moveTooSlow(int x, int y) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = {x + "", y + ""};
@@ -249,6 +265,9 @@ public class ClientCommunicator extends Observable {
 	 * @param playerName the name of this player
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
+	 */
+	/*@
+	  requires playerName != null;
 	 */
 	public void PlayerQuited(String playerName) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -304,13 +323,15 @@ public class ClientCommunicator extends Observable {
 		}
 	}
 	
-
 	@Override
 	public void notifyObservers(Object argument) {
 		setChanged();
 		super.notifyObservers(argument);
 	}
 	
+	/*@
+	  ensures \result != null;
+	 */
 	@Override
 	public String toString() {
 		return clientHandler.toString();
