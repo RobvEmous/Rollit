@@ -7,7 +7,7 @@ import java.io.IOException;
  * respond to an attempt to connect.
  * 
  * @author Rob van Emous
- *
+ * @version 1.0
  */
 public class ServerNotFoundException extends IOException {
 	private static final long serialVersionUID = 6603449370302934165L;

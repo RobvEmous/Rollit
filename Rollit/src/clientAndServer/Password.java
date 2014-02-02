@@ -1,4 +1,4 @@
-package server;
+package clientAndServer;
 
 public class Password {
 	public static final String INITIAL = "password123";
@@ -8,6 +8,14 @@ public class Password {
 	
 	public Password() {
 		password = INITIAL;
+	}
+	
+	public static boolean isValidPassword(String testPass) {
+		boolean isAcceptable = false;
+		if (testPass.length() > 5 && !(testPass.contains(" "))) {
+			isAcceptable = true;
+		}
+		return isAcceptable;
 	}
 	
 	public boolean acceptable(String testPass) {

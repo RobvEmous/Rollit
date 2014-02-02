@@ -31,6 +31,8 @@ public class Client extends Thread {
 	private BufferedWriter out;
 	private ArrayList<Command> commands;
 	private ArrayList<Command> answers;
+	
+	private volatile boolean stop = false;
 
 	/**
 	 * Constructs a Client-object and tries to make a socket connection
@@ -60,7 +62,7 @@ public class Client extends Thread {
 	 */
 	public void run() {
 		try {
-			while (true) {
+			while (!stop) {
 				Command c = waitForCommand();
 				if (c.getId().contains(Commands.COM_ACK)) {
 					synchronized (answers) {
@@ -89,7 +91,7 @@ public class Client extends Thread {
 	
 	private String waitForLine() throws IOException {
 		String line = null;
-		while ((line = in.readLine()) == null) {
+		while (!stop && (line = in.readLine()) == null) {
 			try {
 				Thread.sleep(20);
 			} catch (InterruptedException e) {
@@ -144,6 +146,16 @@ public class Client extends Thread {
 	}
 	
 	/**
+	 * Removes all commands from the list.
+	 * This should only be done after responding to all these commands.
+	 */
+	public void removeAllCommands() {
+		synchronized (commands) {
+			commands.clear();
+		}		
+	}
+	
+	/**
 	 * Removes the specified command from the list.
 	 * This should only be done after responding to this command.
 	 * @param c the command to be removed
@@ -173,8 +185,18 @@ public class Client extends Thread {
 	}
 	
 	/**
+	 * Removes all answers from the list.
+	 * This should only be done after reading all these answers.
+	 */
+	public void removeAllAnswers() {
+		synchronized (answers) {
+			answers.clear();
+		}		
+	}
+	
+	/**
 	 * Removes the specified answer from the list.
-	 * This should only be done after responding to this answer.
+	 * This should only be done after reading this answer.
 	 * @param c the command to be removed
 	 */
 	public void removeAnswers(Command c) {
@@ -196,16 +218,7 @@ public class Client extends Thread {
 	 * closes the socket connection. 
 	 * */
 	public void shutdown() {
-		try {
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();	
-		}
-		try {
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		stop = true;
 		try {
 			sock.close();
 		} catch (IOException e) {

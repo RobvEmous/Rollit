@@ -84,6 +84,9 @@ public class ClientHandler extends Thread {
 				e.printStackTrace();
 			}
 		}
+		if (stop) {
+			line = "";
+		}
 		return line;
 	}
 	
@@ -132,6 +135,16 @@ public class ClientHandler extends Thread {
 	}
 	
 	/**
+	 * Removes all commands from the list.
+	 * This should only be done after responding to all these commands.
+	 */
+	public void removeAllCommands() {
+		synchronized (commands) {
+			commands.clear();
+		}		
+	}
+	
+	/**
 	 * Removes the specified command from the list.
 	 * This should only be done after responding to this command.
 	 * @param c the command to be removed
@@ -161,8 +174,18 @@ public class ClientHandler extends Thread {
 	}
 	
 	/**
+	 * Removes all answers from the list.
+	 * This should only be done after reading all these answers.
+	 */
+	public void removeAllAnswers() {
+		synchronized (answers) {
+			answers.clear();
+		}		
+	}
+	
+	/**
 	 * Removes the specified answer from the list.
-	 * This should only be done after responding to this answer.
+	 * This should only be done after reading this answer.
 	 * @param c the command to be removed
 	 */
 	public void removeAnswers(Command c) {
@@ -186,16 +209,6 @@ public class ClientHandler extends Thread {
 	public void shutdown() {
 		stop = true;
 		try {
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();	
-		}
-		try {
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
 			sock.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -204,7 +217,7 @@ public class ClientHandler extends Thread {
 	
 	@Override
 	public String toString() {
-		return sock.toString();
+		return sock.getPort() + "";
 	}
 
 }

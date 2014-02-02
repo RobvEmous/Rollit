@@ -46,8 +46,8 @@ public class ServerCommunicator extends Observable {
 							}
 						}
 						notifyObservers(c);
-						client.removeCommand(c);
 					}
+					client.removeAllCommands();
 					try {
 						Thread.sleep(GlobalSettings.SLEEP_TIME);
 					} catch (InterruptedException e) {

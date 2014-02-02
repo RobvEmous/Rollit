@@ -54,19 +54,24 @@ public class Main implements Observer {
 		mainUI.setVisible(true);
 	}
 
-	public void logout() {
+	public void logout(boolean login) {
 		String subject = "Logout";
 		try {
 			if (isLoggedInOnline) {
 				c.logout();
 			}
-			mainUI.addPopup(subject, "The logout was succesfull", false);
-			login();
+			if (login) {
+				mainUI.addPopup(subject, "The logout was succesfull", false);
+				login();
+			}
 		} catch (ProtocolNotFollowedException e) {
 			printPopupError(subject, e);
 			e.printStackTrace();
 		} catch (IOException e) {
 			printPopupError(subject, e);
+			if (login) {
+				login();
+			}
 			e.printStackTrace();
 		} catch (NotSameStateException e) {
 			printPopupError(subject, e);
@@ -91,16 +96,16 @@ public class Main implements Observer {
 	}
 
 	public void highScores() {
-		// TODO Auto-generated method stub
-		
+		// TODO Auto-generated method stub	
 	}
 
 	public void exit() {
 		if (isLoggedInOnline) {
+			logout(false);
 			c.shutdown();
 		}
-		mainUI.toRightCorner();
-		mainUI.addCenteredPopup("Goodbye? :'(", "*Sobbing in a corner quietly*", false);
+		//mainUI.toRightCorner();
+		//mainUI.addCenteredPopup("Goodbye? :'(", "*Sobbing in a corner quietly*", false);
 		System.exit(0);	
 	}
 
@@ -127,7 +132,7 @@ public class Main implements Observer {
 		if (e instanceof ProtocolNotFollowedException) {
 			mainUI.addPopup(subject, subject + " unsuccessfull: server doesn't follow the protocol!", true);
 		} else if (e instanceof IOException) {
-			mainUI.addPopup(subject, "Logout unsuccessfull: server is offline!", true);
+			mainUI.addPopup(subject, "Logout successfull, but the server is offline!", true);
 		}
 	}
 	

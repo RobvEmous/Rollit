@@ -18,11 +18,11 @@ import exceptions.ProtocolNotFollowedException;
  * Represents a server Player in the Rollit game.
  * @author Rob van Emous
  */
-public class GamePlayer implements Observer {
+public class GamePlayer {
 
+	private String name;
     private Ball ball;
     private ClientCommunicator client;
-    private Command moveCommand = null;
     
 	/**
 	 * Creates a new server-side game player object.
@@ -30,10 +30,17 @@ public class GamePlayer implements Observer {
 	 * @param client the client this player is connected to
 	 * @param ball the Ball of the Player
 	 */
-    public GamePlayer(ClientCommunicator client, Ball ball) {
-    	client.addObserver(this);
+    public GamePlayer(String name, ClientCommunicator client, Ball ball) {
+    	this.name = name;
         this.ball = ball;
     }
+    
+    /**
+     * Returns the name of the player.
+     */
+    public String getName() {
+		return name;
+	}
 
     /**
      * Returns the ball of the player.
@@ -42,18 +49,30 @@ public class GamePlayer implements Observer {
         return ball;
     }
     
-    public void sendchatMessage(String message) {
-    	client.
+    /**
+     * Sets the ball of the player.
+     * @param ball the ball of the player
+     */
+    public void setBall(Ball ball) {
+        this.ball = ball;
+    }
+    
+    /**
+     * Returns the {@link ClientCommunicator} object associated with this 
+     * player.
+     */
+    public ClientCommunicator getClient() {
+		return client;
+	}
+    
+    @Override
+    public String toString() {
+    	return name + " (" + ball + ") - ";
     }
 
-    /**
-     * Determines the field for the next move.
-     * 
-     * @param board the current board
-     * @return the player's choice
-     */
-    public Point determineMove(Board board) throws ClientTooSlowException, ProtocolNotFollowedException, IOException {
-		int counter = 0;
+	
+	/*
+	 * 		int counter = 0;
 		moveCommand = null;
 		client.yourTurn();
 		while (moveCommand == null) {
@@ -77,28 +96,7 @@ public class GamePlayer implements Observer {
 			throw new ProtocolNotFollowedException();
 		}
 		client.sendAck(Commands.COM_MOVE, Commands.ANS_GEN_GOOD);
-		return move;		
-    }
-
-    /**
-     * Makes a move on the board.
-     * 
-     * @param board the current board
-     */
-    public void makeMove(Board board) throws ClientTooSlowException, ProtocolNotFollowedException, IOException {
-        Point choice = determineMove(board);
-        board.setField(choice, getBall());
-    }
-
-	@Override
-	public void update(Observable o, Object arg)  {
-		if (o.equals(client)) {
-			Command comm = (Command) arg; 
-			if (comm.getId().equals(Commands.COM_MOVE)) {	
-				moveCommand = comm;
-			}
-		}
-		
-	}
-
+		return move;*/
+	 
+	
 }

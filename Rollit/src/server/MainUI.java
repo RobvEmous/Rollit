@@ -31,6 +31,7 @@ import javax.swing.JTextField;
 
 import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
+import exceptions.PortInUseException;
 
 /**
  * ServerGui. A GUI for the Server.
@@ -54,7 +55,7 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 	private JTextField address;
 	private JTextField port;
 	
-	private boolean portTyped = false;
+	private boolean portTyped = true;
 	
 	private JTextArea taMainMessages;
 	private JTextArea taClientManagerMessages;
@@ -119,7 +120,7 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 		// create ip adress panel
 		JLabel lbAdress = new JLabel("Address: ");
 		address = new JTextField(getHostAddress(), 20);
-		address.addKeyListener(this);
+		address.setEditable(false);
 		
 		panelLabels.add(lbAdress);
 		panelFields.add(address);	
@@ -233,14 +234,23 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 			}
 		} catch (NumberFormatException e) {
 			addPopupMessage("Port invalid", "Port: " 
-					+ portNr + " is not a valid portnumber!", true);
+					+ port.getText() + " is not a valid portnumber!", true);
 			return;
 		}
+
+		try {
+			main.startListening(portNr);
+		} catch (PortInUseException e) {
+			addPopupMessage("Server not started", "Port: " + portNr +
+					" is in use!\nProbably because another instance of" +
+					" the server is already listening on this port.\n" +
+					"Choose another port or shutdown the other server.", 
+					true);		
+			return;
+		}	
 		port.setText(portNr + "");
 		port.setEditable(false);
 		bConnect.setEnabled(false);
-		
-		main.startListening(portNr);
 		
 		taMainMessages.setText("");
 		taClientManagerMessages.setText("");
@@ -251,6 +261,7 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 				"port: " + portNr + ".", false);
 		
 		bDisconnect.setEnabled(true);	
+
 	}
 	
 	private void stopListening() {
@@ -269,6 +280,9 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 	 */
 	public void addMainMessage(String msg) {
 		taMainMessages.append(msg + "\n");
+		taMainMessages.selectAll();
+		int x = taMainMessages.getSelectionEnd();
+		taMainMessages.select(x,x);
 	}	
 
 	/** 
@@ -276,6 +290,9 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 	 */
 	public void addClientManagerMessage(String msg) {
 		taClientManagerMessages.append(msg + "\n");
+		taClientManagerMessages.selectAll();
+		int x = taClientManagerMessages.getSelectionEnd();
+		taClientManagerMessages.select(x,x);
 	}
 	
 	/** 
@@ -283,6 +300,9 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 	 */
 	public void addGameManagerMessage(String msg) {
 		taGameManagerMessages.append(msg + "\n");
+		taGameManagerMessages.selectAll();
+		int x = taGameManagerMessages.getSelectionEnd();
+		taGameManagerMessages.select(x,x);
 	}
 	
 	/** pops up a message to the user  */
@@ -304,7 +324,7 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 	private void updateFieldBoolean(KeyEvent e, JTextField item) {
 		String s = item.getText() + e.getKeyChar();
 		boolean validInput = Tools.containsLetterOrNumber(s);
-		if (item.equals(address)) {
+		if (item.equals(port)) {
 			portTyped = validInput;
 		} 	
 	}

@@ -28,6 +28,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
 import clientAndServer.GlobalSettings;
+import clientAndServer.Password;
 import clientAndServer.Tools;
 
 /**
@@ -188,10 +189,17 @@ public class LoginGUI extends JFrame implements ActionListener, KeyListener, Pop
 			String thePort = port.getText();
 			String theName = name.getText();
 			String thePass = new String(password.getPassword());
-			if (login.tryLogin(theAdress, thePort, theName, thePass)) {
-				setVisible(false);
-				reset();
+			if (Password.isValidPassword(thePass)) {
+				if (login.tryLogin(theAdress, thePort, theName, thePass)) {
+					setVisible(false);
+					reset();
+				}
+			} else {
+				addPopup("Password error", theName + ", the password is not valid!\n" +
+						"The password should at least consist of 6 characters and " +
+						"should contain no spaces", true);
 			}
+
 		} else if (src.equals(bOffline)) {
 			String theName = name.getText();
 			login.goOffline(theName);

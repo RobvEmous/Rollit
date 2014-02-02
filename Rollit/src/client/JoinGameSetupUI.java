@@ -38,7 +38,7 @@ public class JoinGameSetupUI extends JFrame implements PopupUI, ActionListener {
 	
 	private static final Insets PADDING = new Insets(5, 5, 5, 5);
 	
-	private Dimension windowSize = new Dimension(230, 300);
+	private Dimension windowSize = new Dimension(200, 230);
 	private Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
 	private static final String TITLE = "Setup";

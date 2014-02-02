@@ -44,8 +44,8 @@ public class ClientCommunicator extends Observable {
 							}
 						}
 						notifyObservers(c);
-						clientHandler.removeCommand(c);
 					}
+					clientHandler.removeAllCommands();
 					try {
 						Thread.sleep(GlobalSettings.SLEEP_TIME);
 					} catch (InterruptedException e) {
@@ -326,5 +326,10 @@ public class ClientCommunicator extends Observable {
 	public void shutdown() {
 		stop = true;
 		clientHandler.shutdown();	
+	}
+	
+	public void playerDied() {
+		stop = true;
+		notifyObservers(new Command("Player died", new String[]{}));
 	}
 }

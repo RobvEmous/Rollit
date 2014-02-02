@@ -170,7 +170,7 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 	public void actionPerformed(ActionEvent ev) {
 		Object src = ev.getSource();		
 		if (src.equals(logoutItem)) {
-			main.logout();
+			main.logout(true);
 		} else if (src.equals(bJoin)) {
 			main.join(0);
 		} else if (src.equals(bChallenge)) {

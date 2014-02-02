@@ -26,12 +26,12 @@ public class Server extends Thread {
 	private boolean stop = false;
 	private boolean stopped = false;
 	
-	private int port;
+	private ServerSocket socket;
 	private ClientManager manager;
 
     /** Constructs a new Server object */
-	public Server(Main main, ClientManager manager, int port) {
-		this.port = port;
+	public Server(Main main, ClientManager manager, ServerSocket socket) {
+		this.socket = socket;
 		this.manager = manager;
 	}
 
@@ -42,9 +42,7 @@ public class Server extends Thread {
 	 * is passed to the {@link ClientManager}.
 	 */
 	public void run() {
-		ServerSocket socket = null;
 		try {
-			socket = new ServerSocket(port);
 			socket.setSoTimeout(GlobalSettings.TIME_OUT);
 			while (!stop) {
 				try {
@@ -54,9 +52,6 @@ public class Server extends Thread {
 				} catch (SocketTimeoutException e) {
 					// The timeout is only used so the server can be 
 					// stopped if necessary.
-				} catch (BindException e) {
-					stop = true;
-					e.printStackTrace();
 				}
 			}
 			socket.close();

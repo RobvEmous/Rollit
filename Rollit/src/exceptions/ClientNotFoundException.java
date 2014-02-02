@@ -7,7 +7,7 @@ import java.io.IOException;
  * The client most likely rage-quited ;).
  * 
  * @author Rob van Emous
- *
+ * @version 1.0
  */
 public class ClientNotFoundException extends IOException {
 	private static final long serialVersionUID = 4036764230921915113L;

@@ -1,5 +1,7 @@
 package server;
 
+import clientAndServer.Password;
+
 public class Player {
 
 	private String name;

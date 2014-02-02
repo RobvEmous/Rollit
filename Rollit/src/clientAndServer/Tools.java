@@ -77,7 +77,28 @@ public class Tools {
 		for (int i = 0; i < args.length - 1; i++) {
 			string += args[i] + " ";
 		}
-		return string + args[args.length - 1];
+		if (args.length > 0) {
+			return string + args[args.length - 1];
+		} else {
+			return string;
+		}
+	}
+	
+	/**
+	 * Returns a <code>toString()</code> of every element of the list and
+	 * separates every element by a comma.
+	 * @param list the list to convert
+	 */
+	public static <V> String ArrayListToString(ArrayList<V> list) {
+		String string = "";
+		for (V v : list) {
+			string += v.toString() + ", ";
+		}
+		if (list.size() > 0) {
+			return string + list.get(list.size() - 1);
+		} else {
+			return string;
+		}
 	}
 	
 	public static String[] removeOne(String[] all, String theOne) {

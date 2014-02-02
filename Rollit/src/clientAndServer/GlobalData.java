@@ -12,8 +12,8 @@ public class GlobalData {
 			"Either the server is offline, or it uses a different communication protocol.";
 	public static final String ERR_STATE = ", the server responds that it has kicked this client because " +
 			"it is not in the same state as the client.\n" +
-			"This should never happen, so I hope Mr. Lennard does not see this, EVER";
-	public static final String ERR_CLIENT_CONNECTION = ", I cannot connect to the server.\n" +
+			"This should never happen, so I hope Mr. Lennard does not see this, EVER.";
+	public static final String ERR_CLIENT_CONNECTION = ", you cannot connect to the server.\n" +
 			"Either the server is offline, or a wrong adress or port have been used";
 	public static final String ERR_CLIENT_TO_SLOW = ", you have not performed a move fast enough.\n" +
 			"You will skip this turn and a random move has been performed for you.";

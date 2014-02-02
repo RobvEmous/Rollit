@@ -1,10 +1,15 @@
 package server;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
+
+import javax.activation.URLDataSource;
+
+import clientAndServer.Password;
 
 /**
  * <h1>Class for reading and writing save-files for the Rolit game.</h1>
@@ -22,14 +27,14 @@ public class PlayerRW {
 	
 	private static final String ADMIN_PASS = "verysafe";	
 	private String filePath = "files\\";
-	private String fileName = "ppwd.dat"; // player password data
+	private String fileName = "ppwdd.dat"; // player password data
 	private File file;
 	
 	private FileWriter out;
 	private ArrayList<Player> players = null;
 	
 	public PlayerRW() {
-		file = new File(filePath + fileName);
+		file = new File(filePath, fileName);
 		players = new ArrayList<Player>();
 	}
 	
@@ -38,6 +43,7 @@ public class PlayerRW {
 	 */
 	public void open() {
 		if (file.exists()) {
+			System.out.println(file.length());
 			readFile();
 		}
 	}

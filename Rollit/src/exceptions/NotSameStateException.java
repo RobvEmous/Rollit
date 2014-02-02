@@ -6,7 +6,7 @@ package exceptions;
  * is a bad(ly programmed) client. <b>This should never happen</b>.
  * 
  * @author Rob van Emous
- *
+ * @version 1.0
  */
 public class NotSameStateException extends Exception {
 	private static final long serialVersionUID = 6432101392173853327L;

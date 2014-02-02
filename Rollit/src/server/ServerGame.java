@@ -15,7 +15,7 @@ import clientAndServer.Board;
  * @author Rob van Emous
  * @version 0.1
  */
-public class ServerGame implements Observer {
+public class ServerGame extends Observable implements Observer {
 	
     /**
      * The board of the game.
@@ -30,7 +30,7 @@ public class ServerGame implements Observer {
     /**
      * The player of the game.
      */
-    private ArrayList<GamePlayer> players;
+    private ArrayList<ClientCommunicator> players;
     
     /*
      * The score-writer object to be able to save the scores
@@ -54,7 +54,7 @@ public class ServerGame implements Observer {
      * 
      * @param thePlayers the players
      */
-    public ServerGame(ArrayList<GamePlayer> players, ScoreRW scores) {
+    public ServerGame(ArrayList<GamePlayer> players) {
     	this.players = players;
     	this.scores = scores;
     	nrOfPlayers = players.size();
@@ -376,7 +376,7 @@ public class ServerGame implements Observer {
 		return tempBoard;
 	}
 
-	private void receiveChatMessage(Command comm) throws ProtocolNotFollowedException {
+	private void sendChatMessage(GamePlayer sender, String message) throws ProtocolNotFollowedException {
 		try {
 			String playerName = comm.getArgs()[0];
 			String message = comm.getArgs()[1];
@@ -410,13 +410,21 @@ public class ServerGame implements Observer {
 		}	
 	}
 
-	private void performClientMove() {
-		gameUI.addPopup("Your turn", main.getClientName() + " , it is your turn!\n" +
-				"Your have got: " + (GlobalSettings.THINK_TIME / 1000) + "seconds to pick a field.", true);
+	
+	@Override
+	public void notifyObservers(Object argument) {
+		setChanged();
+		super.notifyObservers(argument);
 	}
+	
 
 	public int getNrOfPlayers() {
 		return nrOfPlayers;
+	}
+
+	public void shutdown() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
