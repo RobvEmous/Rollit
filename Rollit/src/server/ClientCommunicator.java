@@ -8,23 +8,22 @@ import clientAndServer.Command;
 import clientAndServer.Commands;
 import clientAndServer.GlobalSettings;
 import exceptions.ProtocolNotFollowedException;
-import java.util.*;
-import java.net.*;
 
 /**
- * This class is the protocol-layer above the standard ClientHandler<br>  It is able to send all supported commands and waits for an  'Ack'-command from the client. To be able to read commands from the  client any class can observe this class and will be updated if a  command is received.
- * @author  Rob van Emous
- * @version  1.0
+ * This class is the protocol-layer above the standard ClientHandler<br> 
+ * It is able to send all supported commands and waits for an 
+ * 'Ack'-command from the client. To be able to read commands from the 
+ * client any class can observe this class and will be updated if a 
+ * command is received.
+ * @author Rob van Emous
+ * @version 1.0
  */
 public class ClientCommunicator extends Observable {
 		
 	private ClientHandler clientHandler;
 	
 	private boolean stop = false;
-	/*@
-	  requires sockArg != null;
-	  ensures this != null;
-	 */
+	
 	public ClientCommunicator(Socket sockArg) throws IOException {
 		clientHandler = new ClientHandler(sockArg);
 		clientHandler.start();
@@ -35,7 +34,7 @@ public class ClientCommunicator extends Observable {
 		Thread reader = new Thread(new Runnable() {		
 			@Override
 			public void run() {
-				while (!stop) {
+				while (!stop && clientHandler.isAlive()) {
 					for (Command c : clientHandler.getCommands()) {
 						while (countObservers() == 0) {
 							try {
@@ -52,7 +51,7 @@ public class ClientCommunicator extends Observable {
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
-				}		
+				}	
 			}
 		});
 		reader.start();		
@@ -65,9 +64,6 @@ public class ClientCommunicator extends Observable {
 	 * @param arg possible argument about whether the command has been 
 	 * accepted or not
 	 * @throws IOException
-	 */
-	/*@
-	  requires id != null;
 	 */
 	public synchronized void sendAck(String id, String arg) throws IOException {
 		String[] args = {arg};
@@ -84,9 +80,6 @@ public class ClientCommunicator extends Observable {
 	 * @param players the players of the new game
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
-	 */
-	/*@
-	  requires players != null;
 	 */
 	public void newGame(String[] players) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -119,9 +112,6 @@ public class ClientCommunicator extends Observable {
 	 * @param message the chat message
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
-	 */
-	/*@
-	  requires message != null;
 	 */
 	public void message(String message) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -158,9 +148,6 @@ public class ClientCommunicator extends Observable {
 	 * @param y the y-coordinate of the move
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
-	 */
-	/*@
-	  requires playerName != null && 0 <= x && 0 <= y;
 	 */
 	public void update(String playerName, int x, int y) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -229,9 +216,6 @@ public class ClientCommunicator extends Observable {
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
 	 */
-	/*@
-	  requires 0 <= x && 0 <= y;
-	 */
 	public void moveTooSlow(int x, int y) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
 		String[] args = {x + "", y + ""};
@@ -265,9 +249,6 @@ public class ClientCommunicator extends Observable {
 	 * @param playerName the name of this player
 	 * @throws ProtocolNotFollowedException
 	 * @throws IOException
-	 */
-	/*@
-	  requires playerName != null;
 	 */
 	public void PlayerQuited(String playerName) throws ProtocolNotFollowedException, IOException {
 		int counter = 0;
@@ -329,9 +310,6 @@ public class ClientCommunicator extends Observable {
 		super.notifyObservers(argument);
 	}
 	
-	/*@
-	  ensures \result != null;
-	 */
 	@Override
 	public String toString() {
 		return clientHandler.toString();
@@ -343,14 +321,14 @@ public class ClientCommunicator extends Observable {
 	 * This should only be done when the connection with the client has
 	 * been lost or when the client is kicked
 	 * This cannot be undone otherwise than re-constructing this class.
+	 * @param selfDestruct whether this class has initiated the shutdown or not
 	 */
-	public void shutdown() {
+	public void shutdown(boolean selfDestruct) {
 		stop = true;
 		clientHandler.shutdown();	
+		if (selfDestruct) {
+			notifyObservers(new Command("Player died", new String[]{}));
+		}
 	}
 	
-	public void playerDied() {
-		stop = true;
-		notifyObservers(new Command("Player died", new String[]{}));
-	}
 }

@@ -95,7 +95,7 @@ public class Tools {
 			string += v.toString() + ", ";
 		}
 		if (list.size() > 0) {
-			return string + list.get(list.size() - 1);
+			return new String(string.substring(0, string.length() - 3));
 		} else {
 			return string;
 		}
@@ -108,7 +108,7 @@ public class Tools {
 				rest.add(one);
 			}
 		}
-		return (String[])rest.toArray();
+		return (String[])rest.toArray(new String[rest.size()]);
 	}
 	
 	public static <V> ArrayList<V> addOneToStart(V[] allButOne, V theOne) {

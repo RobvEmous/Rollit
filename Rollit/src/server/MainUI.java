@@ -271,8 +271,14 @@ public class MainUI extends JFrame implements ActionListener, KeyListener {
 		
 		addPopupMessage("Server stopped", "The server side of the Rolit " +
 				" game has been stopped succesfully!", false);
-		
-		bConnect.setEnabled(true);
+		String oldAddress = address.getText();
+		String newAddress = getHostAddress();
+		if (!oldAddress.equals(newAddress)) {
+			address.setText(getHostAddress());
+			addPopupMessage("New ip-adress", "Your ip-adress has changed:\n" +
+					oldAddress + " --> " + newAddress, false);
+		}	
+		bConnect.setEnabled(true);	
 	}
 
 	/** 

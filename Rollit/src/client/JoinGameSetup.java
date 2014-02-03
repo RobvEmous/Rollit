@@ -35,7 +35,7 @@ public class JoinGameSetup implements Observer {
 		this.c = c;
 		ui = new JoinGameSetupUI(this);	
 		ui.setVisible(true);
-		c.addObserver(this);
+		this.c.addObserver(this);
 	}
 	
 	public void joinGame(String choice, int nrOfPlayers) {
@@ -64,7 +64,7 @@ public class JoinGameSetup implements Observer {
 		String infoTitle = "Disjoin game";
 		try {
 			c.disjoin();
-			ui.addPopup(infoTitle, main.getClientName() + GlobalData.MSG_WAITING_J, false);
+			ui.addPopup(infoTitle, main.getClientName() + ", disjoined succesful!", false);
 		} catch (ProtocolNotFollowedException e) {
 			ui.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
 			goBack(false);
@@ -89,9 +89,9 @@ public class JoinGameSetup implements Observer {
 			final String[] otherPlayers = Tools.removeOne(allPlayers, clientname);
 			if (allPlayers.length != nrOfPlayers || allPlayers.length - otherPlayers.length != 1) {
 				throw new ProtocolNotFollowedException();
-			} 
-			c.deleteObserver(this);
+			} 		
 			ui.dispose();
+			c.deleteObserver(this);
 			// from here the gameSetting is final and an online game will be started.
 			final GamePlayer player = nameToPlayer(choice);
 			Thread newGame = new Thread(new Runnable() {	
@@ -138,12 +138,12 @@ public class JoinGameSetup implements Observer {
 	public void update(Observable o, Object arg) {
 		if (o.equals(c)) {
 			Command comm = (Command) arg;
-			if (comm.equals(Commands.COM_NEWGAME)) {
+			if (comm.getId().equals(Commands.COM_NEWGAME)) {
 				ui.setVisible(false);
-				newGame = comm;	
-				try {
-					c.sendAck(newGame.getId(), new String(""));
-					startGame();
+				try {				
+					newGame = comm;
+					startGame();	
+					c.sendAck(comm.getId(), new String(""));
 				} catch (IOException e) {
 					ui.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
 					goBack(false);

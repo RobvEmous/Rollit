@@ -32,7 +32,7 @@ import clientAndServer.Tools;
  * The main gui of the Rolit game.
  * 
  * @author  Rob van Emous
- * @version v0.1
+ * @version v1.0
  */
 public class MainUI extends JFrame implements ActionListener, PopupUI {
 	private static final long serialVersionUID = 5334287799998677921L;
@@ -176,7 +176,7 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 		} else if (src.equals(bJoin)) {
 			main.join(0);
 		} else if (src.equals(bChallenge)) {
-			main.challenge();
+			//main.challenge(); NOT IMPLEMENTED
 		} else if (src.equals(bHighscores)) {	
 			main.highScores();
 		} else if (src.equals(bOfflineGame)) {

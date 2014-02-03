@@ -1,5 +1,7 @@
 package clientAndServer;
 
+import server.ClientCommunicator;
+
 /**
  * All commands as has been agreed upon by the work group.
  * 
@@ -140,5 +142,12 @@ public final class Commands {
 	 * Server --> Client.
 	 */	
 	public static final String ANS_LOGIN_BAD = "incorrect";
+	
+	// internal commands
+	/**
+	 * Used to signal the observers of the {@link ClientCommunicator} the 
+	 * player has disconnected.<br>
+	 */
+	public static final String NOT_PLAYERDIED = "playerDied";
 	
 }

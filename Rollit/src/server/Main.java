@@ -51,9 +51,12 @@ public class Main {
 		} catch (IOException e) {
 			throw new PortInUseException();
 		} 
+		addMessage(this, "Socket opened");
 		clientmanager = new ClientManager(this);
+		addMessage(this, "Client manager started");
 		server = new Server(this, clientmanager, socket);
 		server.start();	
+		addMessage(this, "Server started");
 		started = true;
 	}
 	

@@ -14,6 +14,7 @@ import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
 import exceptions.NotSameStateException;
+import exceptions.ProtocolNotFollowedException;
 
 /**
  * Class is thread-safe
@@ -31,14 +32,14 @@ public class GameManager implements Observer {
 		
 	private Main main;	
 	private ClientManager clientManager;
-	private ScoreRW scoreRW;
+	//private ScoreRW scoreRW;
 	
 	private String waiterAdded = "Got client from ClientManager: ";
 	private String waiterKicked = "Client kicked: ";
 	private String waiterDisconnected= "Client disconnected: ";
 	private String waiterDisjoined= "Client disjoined: ";
 	private String gameStarted = "Game started with: ";
-	private String gameStopped = "Game stopped with: ";
+	//private String gameStopped = "Game stopped with: ";
 	private String playerStopped = "Player rage-quited: ";
 	private String playerKicked = "Player kicked: ";
 	private String playerDisconnected = "Player disconnected: ";
@@ -51,26 +52,25 @@ public class GameManager implements Observer {
 	public GameManager(Main main, ClientManager clientManager, ScoreRW scoreRW) {
 		this.main = main;
 		this.clientManager = clientManager;
-		this.scoreRW = scoreRW;
+		//this.scoreRW = scoreRW;
 		waitersName = new HashMap<ClientCommunicator, String>();
 		waitersGameKind = new HashMap<ClientCommunicator, Integer>();
 		games = new ArrayList<ServerGame>();
-		//gameCreator();
+		gameCreator();
 	}
 	
 	private void gameCreator() {
-		final GameManager gm = this;
 		Thread gameCreator = new Thread(new Runnable() {		
 			@Override
 			public void run() {
 				while (!stop) {
 					for (int i = MIN_NR_OF_GAMEPLAYERS; i <= MAX_NR_OF_GAMEPLAYERS; i++) {
 						ArrayList<ClientCommunicator> players = getPlayers(i);
-						if (players.size() >= i) {
+						if (!stop && players.size() >= i) {
 							players = Tools.getFirstP(players, i);
 							ArrayList<GamePlayer> gamePlayers = convertToGamePlayers(players);
-							sendMessage(gameStarted + Tools.ArrayListToString(players));
-							createNewGame(gamePlayers, gm);
+							sendMessage(gameStarted + Tools.ArrayListToString(gamePlayers));
+							createNewGame(gamePlayers);
 						}
 					}
 					try {
@@ -80,32 +80,55 @@ public class GameManager implements Observer {
 					}
 				}
 			}
-
-			private void createNewGame(final ArrayList<GamePlayer> gamePlayers, final GameManager gm) {
-				Thread newGame = new Thread(new Runnable() {			
-					@Override
-					public void run() {
-						ServerGame game = new ServerGame(gamePlayers);
-						game.addObserver(gm);
-						//game.start();
-					}
-				});
-				newGame.start();				
-			}
-
-			private ArrayList<GamePlayer> convertToGamePlayers(
-					ArrayList<ClientCommunicator> players) {
-				ArrayList<GamePlayer> gamePlayers = new ArrayList<GamePlayer>();
-				Ball ball = Ball.RED;
-				for (ClientCommunicator player : players) {
-					gamePlayers.add(new GamePlayer(waitersName.get(player), player, ball));
-					ball = ball.next();
-				}
-				return gamePlayers;
-			}
-
 		});
 		gameCreator.start();
+	}
+	
+	private void createNewGame(final ArrayList<GamePlayer> gamePlayers) {
+		String[] names = getNames(gamePlayers);
+		for (GamePlayer player : gamePlayers) {
+			try {
+				synchronized (waitersName) {
+					synchronized (waitersGameKind) {
+						waitersName.remove(player.getClient());
+						waitersGameKind.remove(player.getClient());
+					}
+				}
+				player.getClient().deleteObserver(this);
+				player.getClient().newGame(names);
+			} catch (ProtocolNotFollowedException | IOException e) {
+				e.printStackTrace();
+			}
+		}
+		final GameManager gm = this;
+		Thread newGame = new Thread(new Runnable() {			
+			@Override
+			public void run() {
+				ServerGame game = new ServerGame(gamePlayers);
+				game.addObserver(gm);
+				game.start();
+			}
+		});
+		newGame.start();				
+	}
+	
+	private String[] getNames(ArrayList<GamePlayer> gamePlayers) {
+		String[] names = new String[gamePlayers.size()];
+		for (int i = 0; i < names.length; i++ ) {
+			names[i] =  gamePlayers.get(i).getName();
+		}
+		return names;
+	}
+
+	private ArrayList<GamePlayer> convertToGamePlayers(
+			ArrayList<ClientCommunicator> players) {
+		ArrayList<GamePlayer> gamePlayers = new ArrayList<GamePlayer>();
+		Ball ball = Ball.RED;
+		for (ClientCommunicator player : players) {
+			gamePlayers.add(new GamePlayer(waitersName.get(player), player, ball));
+			ball = ball.next();
+		}
+		return gamePlayers;
 	}
 
 	/**
@@ -142,7 +165,7 @@ public class GameManager implements Observer {
 	public void addDonePlaying(GamePlayer player)  {
 		sendToClientManager(player);
 	}
-	
+
 	public void sendToClientManager(GamePlayer player) {
 		sendToClientManager(player.getClient(), player.getName());
 		
@@ -226,7 +249,7 @@ public class GameManager implements Observer {
 		//scoreRW.close();	
 		for (ClientCommunicator client : waitersName.keySet()) {
 			client.deleteObserver(this);
-			client.shutdown();
+			client.shutdown(false);
 		}
 		sendMessage(allWaitersRemoved);
 		for (ServerGame game : games) {
@@ -253,9 +276,10 @@ public class GameManager implements Observer {
 			Command comm = (Command) arg;
 			if  (comm.getId().equals(Commands.COM_DISJOIN)) {
 				try {
+					client.sendAck(comm.getId(), Commands.ANS_GEN_GOOD);
 					sendToClientManager(client, waitersName.get(client));
 					removeWaiter(client, 2);
-					client.sendAck(comm.getId(), Commands.ANS_GEN_GOOD);
+					
 				} catch (IOException e) {
 					removeWaiter(client, 1);
 					e.printStackTrace();
@@ -269,12 +293,10 @@ public class GameManager implements Observer {
 				}
 			}
 		} else if (game != null && games.contains(o)) {
-			HighScore highScore = (HighScore) arg;
-			//scoreRW.addHighScore(highScore);
-			if (highScore != null) {
-				sendMessage(gameStopped + highScore.getResult());
-			} else {
-				sendMessage(gameStopped);
+			@SuppressWarnings("unchecked")
+			ArrayList<GamePlayer> players = (ArrayList<GamePlayer>)arg;
+			for (GamePlayer player : players) {
+				addDonePlaying(player);
 			}
 			
 		}

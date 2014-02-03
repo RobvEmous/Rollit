@@ -1,13 +1,19 @@
 package server;
 
+import java.awt.Point;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
+
 import clientAndServer.*;
 
 import clientAndServer.Board;
+import exceptions.NotSameStateException;
+import exceptions.ProtocolNotFollowedException;
 
 /**
  * Class for maintaining the Rollit game.
@@ -44,319 +50,294 @@ public class ServerGame extends Observable implements Observer {
     
     private Random rand;
     
+    private Command moveCommand = null;
+    
+    private boolean stop = false;
+    
     /**
      * Creates a new Game.
      * 
-     * @param thePlayers the players
+     * @param players the players
      */
     public ServerGame(ArrayList<GamePlayer> players) {
     	this.players = players;
     	nrOfPlayers = players.size();
-    	Board board = new Board();
-        board.setInitial();
+    	board = new Board();
+    	rand = new Random();
     }
     
 	/**
      * Starts the online Rolit game. <br>
      */
-    private void start() {
-
+    public void start() { 	
+    	reset();
+    	for (GamePlayer player : players) {
+    		player.getClient().addObserver(this);
+    	}
+		try {
+			Thread.sleep(GlobalSettings.TIME_OUT);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    	while (!stop && !board.gameOver()) {
+    		performMove();
+    		nextCurrent();
+    	}
+    	if (!stop) {
+    		gameOver();
+    	} else {
+    		shutdown();
+    	}    	
     }
 
-	/**
-     * Prints the game situation.
+    /**
+     * Resets the game. <br>
+     * The board is emptied and a random player becomes the current 
+     * player.
      */
-    private void updateScreen() {
-		System.out.println(
-				"\n" + curr + "\n\n" + board.toString());
-		System.out.println(ballOccurences());
+    private void reset() {
+    	if (starter == -1) {
+    		starter = rand.nextInt(nrOfPlayers);
+    	} else {
+    		int tempStarter = rand.nextInt(nrOfPlayers);
+    		while (tempStarter == starter) {
+    			tempStarter = rand.nextInt(nrOfPlayers);
+    		}
+    		starter = tempStarter;
+    	}
+    	current = starter;
+    	board.reset();
+    	board.setInitial();
     }
     
-    public GamePlayer getClient() {
-    	return clientPlayer;
+    private void nextCurrent() {
+    	if (current < nrOfPlayers - 1) {
+    		current++;
+    	} else {
+    		current = 0;
+    	}   
     }
     
-    private GamePlayer getServerPlayer(String name) {
-    	for (GamePlayer serverPlayer : serverPlayers) {
-    		if (serverPlayer.getName().equals(name)) {
-    			return serverPlayer;
+    private GamePlayer getPlayer(ClientCommunicator c) {
+    	for (GamePlayer player : players) {
+    		if (player.getClient().equals(c)) {
+    			return player;
     		}
     	}
     	return null;
     }
     
-    public GamePlayer[] getServerPlayers() {
-    	GamePlayer[] players = new GamePlayer[serverPlayers.size()];
-    	for (int i = 0; i < players.length; i++) {
-    		players[i] = serverPlayers.get(i);
-    	}
-    	return players;
-    }
-        
-    public boolean ClientHasturn() {
-    	return clientHasTurn;
-    }
-    
-    /**
-     * Returns the winning player or null if it is a draw.
-     */
-    public GamePlayer getWinner() {
-    	GamePlayer player = null;
-    	Ball winner = board.getWinner();
-    	if (winner != null) {
-    		if (clientPlayer.equals(winner)) {
-    			player = clientPlayer;
-    		} else {
-    	    	for (GamePlayer serverPlayer : serverPlayers) {
-    	    		if (serverPlayer.equals(winner)) {
-    	    			player = serverPlayer;
-    	    		}
-    	    	}
-    		}
-
-    	}
-    	return player;
-    }
-    
-    /**
-     * Returns the 'drawing' players or null if a player has won.
-     */
-    public ArrayList<GamePlayer> getDrawers() {
-    	ArrayList<Ball> drawers = board.getDrawers();
-    	ArrayList<GamePlayer> players = new ArrayList<GamePlayer>();
-    	if (drawers != null) {
-    		if (drawers.contains(clientPlayer.getBall())) {
-    			players.add(clientPlayer);
-    		} else {
-    	    	for (GamePlayer serverPlayer : serverPlayers) {
-    	    		if (drawers.contains(serverPlayer.getBall())) {
-    	    			players.add(serverPlayer);
-    	    		}
-    	    	}
-    		}
-    	}
-    	return players;
-    }
-    
-    public boolean hasHuman() {
-    	return hasHuman;
-    }
-    
-    private boolean initHasHuman() {
-    	return (clientPlayer instanceof HumanPlayer);
-    }
-    
-    public Point getHint() {
-    	return board.getHint(clientPlayer.getBall());
-    }
-    
-	public void goBack(boolean kicked) {
-		gameUI.dispose();
-		sc.deleteObserver(this);
-		main.returnFromAction();
-	}
-
-	public void rageQuit() {
-		String infoTitle = "Rage Quit";
-		gameUI.dispose();
-		sc.deleteObserver(this);
-		try {		
-			sc.quitGame();
-		} catch (ProtocolNotFollowedException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (IOException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (NotSameStateException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_STATE, true);
-			goBack(true);
-			e.printStackTrace();
-		}
-	}
-
-	public void chat(String text) {
-		String infoTitle = "Chat";
-		try {
-			sc.chat(text);
-		} catch (ProtocolNotFollowedException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (IOException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (NotSameStateException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_STATE, true);
-			goBack(true);
-			e.printStackTrace();
-		}
-		
-	}
-
 	@Override
 	public void update(Observable o, Object arg) {
-		if (o.equals(sc)) {
+		ClientCommunicator client = (ClientCommunicator) o;
+		GamePlayer player = getPlayer(client);
+		if (players.contains(player)) {
 			Command comm = (Command) arg;
-			if (comm.equals(Commands.COM_YOURTURN)) {
+			if (comm.getId().equals(Commands.COM_CHAT)) {
+				String message = "";
 				try {
-					sc.sendAck(comm.getId(), new String(""));
-					clientHasTurn = true;
-					performClientMove();
-				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
+					message = comm.getArgs()[0];
+					ArrayList<GamePlayer> notRespondingToChat = new  ArrayList<GamePlayer>();
+					for (GamePlayer leftoverPlayer : players) {
+						try {
+							leftoverPlayer.getClient().message(message);
+						} catch (ProtocolNotFollowedException | IOException e) {
+							notRespondingToChat.add(player);
+						}
+					}
+					for (GamePlayer nonResponder : notRespondingToChat) {
+						removePlayer(nonResponder);
+					}
+				} catch (ArrayIndexOutOfBoundsException e) {
+					try {
+						player.getClient().sendAck(comm.getId(), Commands.ANS_GEN_BAD);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					removePlayer(player);
 					e.printStackTrace();
 				}
-			} else if (comm.equals(Commands.COM_MOVETOOSLOW)) {
 				try {
-					sc.sendAck(comm.getId(), new String(""));
-					String[] newArgs = {main.getClientName(), comm.getArgs()[0], comm.getArgs()[1]};
-					Command newComm = new Command(Commands.COM_MOVE, newArgs);
-					performServerMove(newComm);
-					updateScreen();
+					player.getClient().sendAck(comm.getId(), Commands.ANS_GEN_GOOD);
 				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
-					e.printStackTrace();
-				} catch (ProtocolNotFollowedException e) {
-					gameUI.addPopup("Forced Move", main.getClientName() + GlobalData.ERR_PROTECOL, true);
-					goBack(false);
-					e.printStackTrace();
-				}	
-			} else if (comm.equals(Commands.COM_UPDATE)) {
-				try {
-					sc.sendAck(comm.getId(), new String(""));
-					performServerMove(comm);
-					updateScreen();
-				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
-					e.printStackTrace();
-				} catch (ProtocolNotFollowedException e) {
-					gameUI.addPopup("Server Move", main.getClientName() + GlobalData.ERR_PROTECOL, true);
-					goBack(false);
-					e.printStackTrace();
-				}	
-			} else if (comm.equals(Commands.COM_MESSAGE)) {
-				try {
-					sc.sendAck(comm.getId(), new String(""));
-					receiveChatMessage(comm);
-				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
-					e.printStackTrace();
-				} catch (ProtocolNotFollowedException e) {
-					gameUI.addPopup("Receive chat message", main.getClientName() + GlobalData.ERR_PROTECOL, true);
-					goBack(false);
+					removePlayer(player);
 					e.printStackTrace();
 				}
-			} else if (comm.equals(Commands.COM_PLAYERQUIT)) {
+			} else if (comm.getId().equals(Commands.COM_MOVE)) {
+				if (players.get(current).equals(player)) {
+					moveCommand = comm;
+				} else {
+					try {
+						player.getClient().sendAck(comm.getId(), Commands.ANS_GEN_BAD);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					removePlayer(player);
+				}
+			} else if (comm.getId().equals(Commands.COM_QUIT)) {
 				try {
-					sc.sendAck(comm.getId(), new String(""));
-					removePlayer(comm);
-					updateScreen();
+					player.getClient().sendAck(comm.getId(), Commands.ANS_GEN_GOOD);
 				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
 					e.printStackTrace();
-				} catch (ProtocolNotFollowedException e) {
-					gameUI.addPopup("Remove player", main.getClientName() + GlobalData.ERR_PROTECOL, true);
-					goBack(false);
-					e.printStackTrace();
-				}	
-
-			} else if (comm.equals(Commands.COM_GAMEOVER)) {
-				try {
-					sc.sendAck(comm.getId(), new String(""));
-					gameOver();
-					updateScreen();
-				} catch (IOException e) {
-					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-					goBack(false);
-					e.printStackTrace();
-				} catch (ProtocolNotFollowedException e) {
-					gameUI.addPopup("Game over", main.getClientName() + GlobalData.ERR_PROTECOL, true);
-					goBack(false);
-					e.printStackTrace();
-				}	
+				}
+				removePlayer(player);
+			} else if (comm.getId().equals(Commands.NOT_PLAYERDIED)) {
+				removePlayer(player);
 			}
 		}
 	}
 	
 	private void gameOver() {
+		ArrayList<GamePlayer> notRespondingToGameOver = new  ArrayList<GamePlayer>();
 		for (GamePlayer player : players) {
-			player.deleteObserver(this);
+			try {
+				player.getClient().gameOver();
+			} catch (ProtocolNotFollowedException | IOException e) {
+				notRespondingToGameOver.add(player);
+				e.printStackTrace();
+			}
+		}		
+		for (GamePlayer player : players) {
+			player.getClient().deleteObserver(this);
 		}
+		for (GamePlayer nonResponder : notRespondingToGameOver) {
+			players.remove(nonResponder);
+		}
+		notifyObservers(players);
+		stop = true;
 	}
 
-	private Board removeQuitersFromBoard(Board tempBoard) {
-		ArrayList<Ball> badBalls = new ArrayList<Ball>();
-		for (Ball ball : Ball.values()) {
-			badBalls.add(ball);
-			for (GamePlayer serverPlayer : serverPlayers) {
-				if (serverPlayer.getBall().equals(ball)) {
-					badBalls.remove(ball);
+	private void removePlayer(GamePlayer player) {
+		player.getClient().deleteObserver(this);
+		players.remove(player);
+		nrOfPlayers--;
+		ArrayList<GamePlayer> notRespondingToQuit = new  ArrayList<GamePlayer>();
+		for (GamePlayer leftoverPlayer : players) {
+			try {
+				leftoverPlayer.getClient().PlayerQuited(player.getName());
+			} catch (ProtocolNotFollowedException | IOException e) {
+				notRespondingToQuit.add(leftoverPlayer);
+				e.printStackTrace();
+			}
+		}
+		if (nrOfPlayers < 2) {
+			gameOver();
+			return;
+		}
+		for (GamePlayer nonResponder : notRespondingToQuit) {
+			removePlayer(nonResponder);
+			nrOfPlayers--;
+			if (nrOfPlayers < 2) {
+				gameOver();
+				return;
+			}
+		}
+
+	}
+	
+	private void performMove() {
+		GamePlayer currentP = players.get(current);
+		Ball ball = currentP.getBall();
+	 	Point performedMove = null;
+	 	int counter = 0;
+		moveCommand = null;
+		try {
+			currentP.getClient().yourTurn();
+		} catch (ProtocolNotFollowedException | IOException e2) {
+			removePlayer(currentP);
+			e2.printStackTrace();
+			return;
+		}
+		loop:
+		while (moveCommand == null) {
+			try {
+				Thread.sleep(GlobalSettings.SLEEP_TIME);
+				counter++;
+				if (counter >= GlobalSettings.THINK_TIME / GlobalSettings.SLEEP_TIME) {
+					performedMove = board.getHint(ball);		
+					try {
+						currentP.getClient().moveTooSlow(performedMove.x, performedMove.y);
+						break loop;
+					} catch (ProtocolNotFollowedException | IOException e) {
+						removePlayer(currentP);
+						e.printStackTrace();
+						return;
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			if (!players.contains(currentP)) {
+				return;
+			}
+		}
+		if (moveCommand != null) {		
+			try {
+				int x = Integer.parseInt(moveCommand.getArgs()[0]);
+				int y = Integer.parseInt(moveCommand.getArgs()[1]);
+				performedMove = new Point(x,y);
+				if (!board.isValidMove(ball, performedMove)) {
+					throw new NotSameStateException();
+				}
+			} catch (NumberFormatException e2) {
+				try {
+					currentP.getClient().sendAck(Commands.COM_MOVE, Commands.ANS_GEN_BAD);
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+				removePlayer(currentP);
+				return;
+			try {
+				currentP.getClient().sendAck(Commands.COM_MOVE, Commands.ANS_GEN_GOOD);
+			} catch (IOException e) {
+				removePlayer(currentP);
+				e.printStackTrace();
+				return;
+			}
+			
+		}
+		
+		board.setField(performedMove, ball);
+		
+		ArrayList<GamePlayer> notRespondingToMove = new  ArrayList<GamePlayer>();
+		for (GamePlayer leftoverPlayer : players) {
+			if (!leftoverPlayer.equals(currentP)) {
+				if (!updatePlayer(leftoverPlayer, currentP, performedMove)) {
+					notRespondingToMove.add(leftoverPlayer);
 				}
 			}
 		}
-		for (Ball ball : badBalls) {
-			tempBoard.removeBallFromBoard(ball);
-		}	
-		return tempBoard;
-	}
-
-	private void sendChatMessage(GamePlayer sender, String message) throws ProtocolNotFollowedException {
-		try {
-			String playerName = comm.getArgs()[0];
-			String message = comm.getArgs()[1];
-			gameUI.addChatMessage(playerName, message);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			throw new ProtocolNotFollowedException();
+		for (GamePlayer nonResponder : notRespondingToMove) {
+			removePlayer(nonResponder);
 		}
 	}
-
-	private void removePlayer(Command comm) throws ProtocolNotFollowedException {
+		
+	private boolean updatePlayer(GamePlayer player, GamePlayer mover, Point move) {
 		try {
-			String playerName = comm.getArgs()[0];
-			serverPlayers.remove(getServerPlayer(playerName));
-			gameUI.addPopup("Player rage-quited", main.getClientName() + ", player: " + playerName, true);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			throw new ProtocolNotFollowedException();
+			player.getClient().update(mover.getName(), move.x, move.y);
+		} catch (ProtocolNotFollowedException | IOException e) {
+			e.printStackTrace();
+			return false;
+			
 		}
-	}
-	
-	private void performServerMove(Command comm) throws ProtocolNotFollowedException {
-		String[] args = comm.getArgs();
-		Point move = null;
-		try {
-			String playerName = args[0];
-			int x = Integer.parseInt(args[1]);
-			int y = Integer.parseInt(args[2]);
-			move = new Point(x,y);
-			board.setField(move, getServerPlayer(playerName).getBall());
-		} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-			throw new ProtocolNotFollowedException();
-		}	
+		return true;
 	}
 
-	
 	@Override
 	public void notifyObservers(Object argument) {
 		setChanged();
 		super.notifyObservers(argument);
 	}
-	
 
-	public int getNrOfPlayers() {
-		return nrOfPlayers;
-	}
 
+	/**
+	 * Stops game and shuts down players.
+	 */
 	public void shutdown() {
-		// TODO Auto-generated method stub
+		for (GamePlayer player : players) {
+			player.getClient().deleteObserver(this);
+			player.getClient().shutdown(false);
+		}
 		
 	}
 

@@ -12,8 +12,8 @@ import javax.swing.JButton;
 
 public class FieldListener implements ActionListener {
 	
-	private OfflineGameUI targetGUI;
-	private OnlineGameUI targetGUI2;
+	private OfflineGameUI targetGUI = null;
+	private OnlineGameUI targetGUI2 = null;
 	/**
 	 * The constructor of this listener assigns the specified GUI as the GUI on which
 	 * this listener acts

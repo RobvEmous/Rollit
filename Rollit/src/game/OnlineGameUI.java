@@ -42,6 +42,7 @@ import javax.swing.text.StyledDocument;
 
 import clientAndServer.Ball;
 import clientAndServer.Board;
+import clientAndServer.GlobalSettings;
 import game.FieldButton;
 
 import client.JoinGameSetupUI;
@@ -395,9 +396,11 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 		if (game.ClientHasturn() && hasHuman) {
 			for(int y = 0; y < Board.Y_MAX; y++) {
 				for (int x = 0; x < Board.X_MAX; x++) {
-					OnlineHumanPlayer client = (OnlineHumanPlayer) game.getClient();
-					if (field[y][x].equals(pressedButton)) {
-						client.choice = new Point(x,y);
+					if (game.ClientHasturn()) {
+						if (field[y][x].equals(pressedButton)) {
+							field[y][x].setEnabled(false);
+							game.move(new Point(x,y));		
+						}
 					}
 				}
 			}
@@ -466,11 +469,15 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 	}
 	
 	private void activateBoard() {
-		hintItem.setEnabled(true);
+		if (hasHuman) {
+			hintItem.setEnabled(true);
+		}
 	}
 	
 	private void deactivateBoard() {
-		hintItem.setEnabled(false);
+		if (hasHuman) {
+			hintItem.setEnabled(false);
+		}	
 	}
 	
 	public String toString() {
@@ -488,26 +495,12 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 
 	@Override
 	public void addPopup(String title, String message, boolean warning) {
-		if (!warning) {
-			JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-	public boolean readQuestionPopup(String title, String message) {
-		int choice = JOptionPane.showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION, 0);
-		if (choice == 1) {
-			return true;
-		}
-		return false;
-	}
-	
-	public static void newPopup(String title, String message, boolean warning) {
-		if (!warning) {
-			JOptionPane.showMessageDialog(null, message, title, JOptionPane.INFORMATION_MESSAGE);
-		} else {
-			JOptionPane.showMessageDialog(null, message, title, JOptionPane.ERROR_MESSAGE);
+		if (isVisible()) {
+			if (!warning) {
+				JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
+			} else {
+				JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 
@@ -528,9 +521,10 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 						(int) screenSize.getHeight() + 50);
 
 			}
-		} else if (e.getSource() instanceof JButton) {
+		} else if (e.getSource() instanceof FieldButton) {
 			JButton pressedButton = (JButton) e.getSource();
 			fieldUsed(pressedButton);
+			//game.move();
 		}
 
 	}

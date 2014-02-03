@@ -494,6 +494,24 @@ public class Board {
     public boolean isValidMove(Ball ball, Point move) {	
 		return getMoves(ball).contains(move);
 	}
+    
+    
+    /**
+     * Returns the moves this Ball can perform.
+     * @param ball the ball of interest
+     */
+	/*@
+	  requires ball != null;
+	  ensures gameOver() ? \result == null : \result != null;
+	  pure;
+	 */
+    public ArrayList<Point> getMoves(Ball ball) {
+    	ArrayList<Point> moves = null;
+    	if ((moves = getNormalMoves(ball)) == null) {
+    		moves = getOtherMoves();
+    	}
+    	return moves;
+    }
 	
     /**
 	  * Returns a random point on the board that is a valid move for the ball of interest.
@@ -538,7 +556,7 @@ public class Board {
 	  				nextToOccupiedField(p) == true);
 	  pure;
 	 */
-	public ArrayList<Point> getMoves(Ball b) {
+	public ArrayList<Point> currentP(Ball b) {
 		ArrayList<Point> moves = getNormalMoves(b);
 		if (moves == null) {
 			moves = otherMoves;

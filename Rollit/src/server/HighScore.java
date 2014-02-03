@@ -2,6 +2,10 @@ package server;
 
 import java.util.HashMap;
 
+/**
+ * NOT IMPLEMENTED
+ *
+ */
 public class HighScore {
 	
 	private int nrOfPlayers;

@@ -144,7 +144,7 @@ public class Client extends Thread {
 	 */
 	public ArrayList<Command> getCommands() {
 		synchronized (commands) {
-			return commands;
+			return new ArrayList<Command>(commands);
 		}		
 	}
 	
@@ -183,7 +183,7 @@ public class Client extends Thread {
 	 */
 	public ArrayList<Command> getAnswers() {
 		synchronized (answers) {
-			return answers;
+			return new ArrayList<Command>(answers);
 		}		
 	}
 	

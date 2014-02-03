@@ -30,7 +30,7 @@ public class ClientHandler extends Thread {
 	private ArrayList<Command> answers;
 	private static final int MAX_SIZE = 50;
 	
-	private boolean stop = false;
+	private volatile boolean stop = false;
 	
 	/**
 	 * Constructs a ClientHandler object and initializes both Data streams.

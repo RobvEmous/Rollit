@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
+import server.Player;
+
 import client.Main;
 import client.ServerCommunicator;
 import clientAndServer.Ball;
@@ -74,6 +76,7 @@ public class OnlineGame implements Observer {
     public OnlineGame(Main main, ServerCommunicator sc, GamePlayer clientPlayer, String[] serverPlayerNames) {
     	this.main = main;
     	this.sc = sc;
+    	sc.addObserver(this);
     	nrOfPlayers = serverPlayerNames.length + 1;
         board = new Board();
         this.clientPlayer = clientPlayer;
@@ -113,6 +116,10 @@ public class OnlineGame implements Observer {
      */
     private void updateScreen() {
    		gameUI.update(board);
+    }
+    
+    private int getNumberOfPlyers() {
+    	return nrOfPlayers;
     }
     
     public GamePlayer getClient() {
@@ -199,52 +206,11 @@ public class OnlineGame implements Observer {
 		main.returnFromAction();
 	}
 
-	public void rageQuit() {
-		String infoTitle = "Rage Quit";
-		gameUI.dispose();
-		sc.deleteObserver(this);
-		try {		
-			sc.quitGame();
-		} catch (ProtocolNotFollowedException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (IOException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (NotSameStateException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_STATE, true);
-			goBack(true);
-			e.printStackTrace();
-		}
-	}
-
-	public void chat(String text) {
-		String infoTitle = "Chat";
-		try {
-			sc.chat(text);
-		} catch (ProtocolNotFollowedException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_PROTECOL, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (IOException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
-			goBack(false);
-			e.printStackTrace();
-		} catch (NotSameStateException e) {
-			gameUI.addPopup(infoTitle, main.getClientName() + GlobalData.ERR_STATE, true);
-			goBack(true);
-			e.printStackTrace();
-		}
-		
-	}
-
 	@Override
 	public void update(Observable o, Object arg) {
 		if (o.equals(sc)) {
 			Command comm = (Command) arg;
-			if (comm.equals(Commands.COM_YOURTURN)) {
+			if (comm.getId().equals(Commands.COM_YOURTURN)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
 					clientHasTurn = true;
@@ -254,12 +220,20 @@ public class OnlineGame implements Observer {
 					goBack(false);
 					e.printStackTrace();
 				}
-			} else if (comm.equals(Commands.COM_MOVETOOSLOW)) {
+			} else if (comm.getId().equals(Commands.COM_MOVETOOSLOW)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
-					String[] newArgs = {main.getClientName(), comm.getArgs()[0], comm.getArgs()[1]};
+					clientHasTurn = false;
+					gameUI.addPopup("To slow", main.getClientName() + ", you have taken too log to perform a move.\n" +
+							"A forced move has been send from the server.", true);
+					String[] newArgs;
+					try {
+						newArgs = new String[]{main.getClientName(), comm.getArgs()[0], comm.getArgs()[1]};
+					} catch (ArrayIndexOutOfBoundsException e) {
+						throw new ProtocolNotFollowedException();
+					}
 					Command newComm = new Command(Commands.COM_MOVE, newArgs);
-					performServerMove(newComm);
+					performServerMove(newComm, true);
 					updateScreen();
 				} catch (IOException e) {
 					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
@@ -270,10 +244,10 @@ public class OnlineGame implements Observer {
 					goBack(false);
 					e.printStackTrace();
 				}	
-			} else if (comm.equals(Commands.COM_UPDATE)) {
+			} else if (comm.getId().equals(Commands.COM_UPDATE)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
-					performServerMove(comm);
+					performServerMove(comm, false);
 					updateScreen();
 				} catch (IOException e) {
 					gameUI.addPopup("Send Ack", main.getClientName() + GlobalData.ERR_CLIENT_CONNECTION, true);
@@ -284,7 +258,7 @@ public class OnlineGame implements Observer {
 					goBack(false);
 					e.printStackTrace();
 				}	
-			} else if (comm.equals(Commands.COM_MESSAGE)) {
+			} else if (comm.getId().equals(Commands.COM_MESSAGE)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
 					receiveChatMessage(comm);
@@ -297,7 +271,7 @@ public class OnlineGame implements Observer {
 					goBack(false);
 					e.printStackTrace();
 				}
-			} else if (comm.equals(Commands.COM_PLAYERQUIT)) {
+			} else if (comm.getId().equals(Commands.COM_PLAYERQUIT)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
 					removePlayer(comm);
@@ -312,7 +286,7 @@ public class OnlineGame implements Observer {
 					e.printStackTrace();
 				}	
 
-			} else if (comm.equals(Commands.COM_GAMEOVER)) {
+			} else if (comm.getId().equals(Commands.COM_GAMEOVER)) {
 				try {
 					sc.sendAck(comm.getId(), new String(""));
 					gameOver();
@@ -334,7 +308,7 @@ public class OnlineGame implements Observer {
 		Board tempBoard = board.deepCopy();
 		removeQuitersFromBoard(tempBoard);
 		String message = "";
-		if (tempBoard.gameOver()) {
+		if (nrOfPlayers == 1 || tempBoard.gameOver()) {
 			if (tempBoard.hasWinner()) {
 				GamePlayer winner = getWinner();
 				int points = tempBoard.countInstancesOf(winner.getBall());
@@ -421,13 +395,20 @@ public class OnlineGame implements Observer {
 		try {
 			String playerName = comm.getArgs()[0];
 			serverPlayers.remove(getServerPlayer(playerName));
-			gameUI.addPopup("Player rage-quited", main.getClientName() + ", player: " + playerName, true);
+			final String name = playerName;
+			Thread remove = new Thread(new Runnable() {	
+				@Override
+				public void run() {
+					gameUI.addPopup("Player rage-quited", main.getClientName() + ", player: " + name, true);
+				}
+			});
+			remove.start();
 		} catch (ArrayIndexOutOfBoundsException e) {
 			throw new ProtocolNotFollowedException();
 		}
 	}
 	
-	private void performServerMove(Command comm) throws ProtocolNotFollowedException {
+	private void performServerMove(Command comm, boolean forced) throws ProtocolNotFollowedException {
 		String[] args = comm.getArgs();
 		Point move = null;
 		try {
@@ -435,16 +416,65 @@ public class OnlineGame implements Observer {
 			int x = Integer.parseInt(args[1]);
 			int y = Integer.parseInt(args[2]);
 			move = new Point(x,y);
-			board.setField(move, getServerPlayer(playerName).getBall());
+			if (forced) {
+				board.setField(move, clientPlayer.getBall());
+			} else {	
+				board.setField(move, getServerPlayer(playerName).getBall());
+			}
 		} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
 			throw new ProtocolNotFollowedException();
 		}	
 	}
 
 	private void performClientMove() {
-		gameUI.addPopup("Your turn", main.getClientName() + " , it is your turn!\n" +
-				"Your have got: " + (GlobalSettings.THINK_TIME / 1000) + "seconds to pick a field.", true);
+		updateScreen();
+		if (hasHuman) {
+			gameUI.addPopup("Your turn", main.getClientName() + " , it is your turn!\n" +
+					"Your have got: " + (GlobalSettings.THINK_TIME / 1000) + " seconds to pick a field.", true);
+		}
+		clientPlayer.determineMove(board);
+		updateScreen();
 	}
+	
+   public void move(Point p) {
+    	String title = "Move";
+    	try {
+    		board.setField(p, clientPlayer.getBall());
+    		updateScreen();
+			sc.move(p.x, p.y);			
+		} catch (ProtocolNotFollowedException e) {
+			gameUI.addPopup(title, main.getClientName() + " , cannot send a move message!", true);
+			goBack(false);
+			e.printStackTrace();
+		} catch (IOException e) {
+			gameUI.addPopup(title, main.getClientName() + " , the server is offline!", true);
+			goBack(false);
+			e.printStackTrace();
+		} catch (NotSameStateException e) {
+			gameUI.addPopup(title, main.getClientName() + " , the server is not in the same state?!", true);
+			goBack(true);
+			e.printStackTrace();
+		}
+    }
+	
+    public void chat(String message) {
+    	String title = "Chat";
+    	try {
+			sc.chat(message);
+		} catch (ProtocolNotFollowedException e) {
+			gameUI.addPopup(title, main.getClientName() + " , cannot send a chat message!", true);
+			goBack(false);
+			e.printStackTrace();
+		} catch (IOException e) {
+			gameUI.addPopup(title, main.getClientName() + " , the server is offline!", true);
+			goBack(false);
+			e.printStackTrace();
+		} catch (NotSameStateException e) {
+			gameUI.addPopup(title, main.getClientName() + " , the server is not in the same state?!", true);
+			goBack(true);
+			e.printStackTrace();
+		}
+    }
 
 	public static void main(String[] args) {
 		OnlineGame game = null;

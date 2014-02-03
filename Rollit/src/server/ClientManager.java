@@ -12,12 +12,26 @@ import clientAndServer.GlobalData;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Password;
 import exceptions.ProtocolNotFollowedException;
-import java.util.*;
 
 /**
- * Class used for managing clients.<br> The managed clients do not need to be logged in, but only clients who  are logged in are able to join games or receive high-scores.<br> At all times this server tries to be in the same state as the client by responding to requests adequately. This is also requested from the client. When a client is not able to do this he will be kicked:<br> For example when a client sends game related commands while not playing a game, like chat-messages or moves.<br> Non-logged in clients will be kicked when trying to perform anything else than logging in and these clients will also be removed after a while. Because of that, clients should immediately try to log in after  establishing a connection with the server.<br> When clients log out their                 {@link ClientCommunicator}         will be shut down and destroyed, so they have to reconnect and re-login when they want to join again.
- * @author         Rob van Emous
- * @version         1.0
+ * Class used for managing clients.<br>
+ * The managed clients do not need to be logged in, but only clients who 
+ * are logged in are able to join games or receive high-scores.<br>
+ * At all times this server tries to be in the same state as the client
+ * by responding to requests adequately. This is also requested from the
+ * client. When a client is not able to do this he will be kicked:<br>
+ * For example when a client sends game related commands while not playing
+ * a game, like chat-messages or moves.<br>
+ * Non-logged in clients will be kicked when trying to perform anything
+ * else than logging in and these clients will also be removed after a
+ * while. Because of that, clients should immediately try to log in after 
+ * establishing a connection with the server.<br>
+ * When clients log out their {@link ClientCommunicator} will be shut down 
+ * and destroyed, so they have to reconnect and re-login when they want to
+ * join again.
+ * 
+ * @author Rob van Emous
+ * @version 1.0
  */
 public class ClientManager implements Observer {
 	/**
@@ -41,7 +55,7 @@ public class ClientManager implements Observer {
 	/**
 	 * Is used to read highScores.
 	 */
-	private ScoreRW scoreRW;
+	//private ScoreRW scoreRW;
 	
 	/**
 	 * Used to send messages to the MainUI.
@@ -74,23 +88,22 @@ public class ClientManager implements Observer {
 	 * @param gameManager used to send authenticated players who want to 
 	 * play a game to the game 'waiting room'. 
 	 */
-	/*@
-	  requires main != null;
-	  ensures this != null;
-	 */
 	public ClientManager(Main main) {
 		this.main = main;	
 		clients = new HashMap<ClientCommunicator, String>();
 		guests = new HashMap<ClientCommunicator, Long>();
 		playerRW = new PlayerRW();
 		playerRW.open();
-		scoreRW = new ScoreRW();
+		//scoreRW = new ScoreRW();
 		//scoreRW.open();		
-		gameManager = new GameManager(main, this, scoreRW);
+		gameManager = new GameManager(main, this, null);
 		main.setGameManager(gameManager);
 		startInactiveGuestRemover();
 	}
 	
+	/**
+	 * Removes 
+	 */
 	private void startInactiveGuestRemover() {
 		Thread remover = new Thread(new Runnable() {			
 			@Override
@@ -133,15 +146,12 @@ public class ClientManager implements Observer {
 	 * 
 	 * @param guest ClientHandler that will be added
 	 */
-	/*@
-	  requires guest != null;
-	 */
 	public void addGuest(ClientCommunicator guest) {
 		long startTime = System.currentTimeMillis();
 		synchronized (guests) {
-			guests.put(guest, startTime);
-			sendMessage(guestAdded + guestInfo(guest));
+			guests.put(guest, startTime);		
 		}	
+		sendMessage(guestAdded + guestInfo(guest));
 		guest.addObserver(this);		
 	}
 	
@@ -155,14 +165,12 @@ public class ClientManager implements Observer {
 		sendMessage(guestUpgraded + clientInfo(guest));
 	}
 	
-	/*@
-	  requires client != null && name != null;
-	 */
-	public void addClient(ClientCommunicator client, String name) {
-		sendMessage(clientFromGame + clientInfo(client));
+	public void addClient(ClientCommunicator client, String name) {		
 		synchronized (clients) {
 			clients.put(client, name);
-		}		
+		}
+		client.addObserver(this);
+		sendMessage(clientFromGame + clientInfo(client));
 
 	}
 	
@@ -184,7 +192,7 @@ public class ClientManager implements Observer {
 	private void removeAllClients() {
 		for (ClientCommunicator client : clients.keySet()) { 
 			client.deleteObserver(this);
-			client.shutdown();	
+			client.shutdown(false);	
 		}
 		clients.clear();
 		sendMessage(allGuestsRemoved);
@@ -208,7 +216,7 @@ public class ClientManager implements Observer {
 	 */
 	private void removeClient(ClientCommunicator client, boolean kick) {
 		client.deleteObserver(this);
-		client.shutdown();	
+		client.shutdown(false);	
 		if (kick) {
 			sendMessage(clientKicked + clientInfo(client));
 		} else {
@@ -239,7 +247,7 @@ public class ClientManager implements Observer {
 	private void removeAllGuests() {
 		for (ClientCommunicator guest : guests.keySet()) { 
 			guest.deleteObserver(this);
-			guest.shutdown();	
+			guest.shutdown(false);	
 		}
 		guests.clear();
 		sendMessage(allClientsRemoved);
@@ -263,7 +271,7 @@ public class ClientManager implements Observer {
 	 */
 	private void removeGuest(ClientCommunicator guest, boolean kick) {
 		guest.deleteObserver(this);
-		guest.shutdown();	
+		guest.shutdown(false);	
 		if (kick) {
 			sendMessage(guestKicked + guestInfo(guest));
 		} else {
@@ -296,15 +304,19 @@ public class ClientManager implements Observer {
 		removeAllClients();
 		playerRW.close();
 	}
-	
-	/*@
-	  requires o != null; 
-	*/
+
 	@Override
 	public void update(Observable o, Object arg) {
 		Command comm = (Command) arg;
 		ClientCommunicator client = (ClientCommunicator) o;
-		if (guests.containsKey(o)) {
+		if (comm.getId().equals(Commands.NOT_PLAYERDIED)) {
+			if (guests.containsKey(client)) {
+				removeGuest(client, false);
+			} else if (clients.containsKey(client)) {
+				removeClient(client, false);
+			}
+		}
+		else if (guests.containsKey(client)) {
 			if (comm.getId().equals(Commands.COM_LOGIN)) {
 				try {
 					String name = "";
@@ -339,7 +351,7 @@ public class ClientManager implements Observer {
 				}
 				removeClient(client, true);
 			}
-		} else if (clients.containsKey(o)) {
+		} else if (clients.containsKey(client)) {
 			if (comm.getId().equals(Commands.COM_LOGOUT)) {
 				try {
 					downgradeClient(client);

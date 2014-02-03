@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.jws.Oneway;
-
 import exceptions.NotSameStateException;
 import exceptions.ProtocolNotFollowedException;
 
@@ -85,10 +83,11 @@ public class Main implements Observer {
 		JoinGameSetup setup = new JoinGameSetup(this, c);	
 	}
 
+	/* NOT IMPLEMENTED
 	public void challenge() {
 		mainUI.setVisible(false);
 		ChallengeGameSetup setup = new ChallengeGameSetup(this, c);
-	}
+	}*/
 
 	public void offlineGame() {
 		mainUI.setVisible(false);
