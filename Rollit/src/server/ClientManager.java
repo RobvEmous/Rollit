@@ -8,7 +8,6 @@ import java.util.Observer;
 
 import clientAndServer.Command;
 import clientAndServer.Commands;
-import clientAndServer.GlobalData;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Password;
 import exceptions.ProtocolNotFollowedException;
@@ -53,11 +52,6 @@ public class ClientManager implements Observer {
 	private PlayerRW playerRW;
 	
 	/**
-	 * Is used to read highScores.
-	 */
-	//private ScoreRW scoreRW;
-	
-	/**
 	 * Used to send messages to the MainUI.
 	 */
 	private Main main;
@@ -88,14 +82,16 @@ public class ClientManager implements Observer {
 	 * @param gameManager used to send authenticated players who want to 
 	 * play a game to the game 'waiting room'. 
 	 */
+	/*@
+	  requires main != null;
+	  ensures this != null;
+	 */
 	public ClientManager(Main main) {
 		this.main = main;	
 		clients = new HashMap<ClientCommunicator, String>();
 		guests = new HashMap<ClientCommunicator, Long>();
 		playerRW = new PlayerRW();
-		playerRW.open();
-		//scoreRW = new ScoreRW();
-		//scoreRW.open();		
+		playerRW.open();	
 		gameManager = new GameManager(main, this);
 		main.setGameManager(gameManager);
 		startInactiveGuestRemover();
@@ -146,6 +142,9 @@ public class ClientManager implements Observer {
 	 * 
 	 * @param guest ClientHandler that will be added
 	 */
+	/*@
+	  requires guest != null;
+	 */
 	public void addGuest(ClientCommunicator guest) {
 		long startTime = System.currentTimeMillis();
 		synchronized (guests) {
@@ -165,6 +164,9 @@ public class ClientManager implements Observer {
 		sendMessage(guestUpgraded + clientInfo(guest));
 	}
 	
+	/*@
+	  requires client != null && name != null;
+	 */
 	public void addClient(ClientCommunicator client, String name) {		
 		synchronized (clients) {
 			clients.put(client, name);
@@ -305,6 +307,9 @@ public class ClientManager implements Observer {
 		playerRW.close();
 	}
 
+	/*@
+	  requires o instanceof ClientCommunicator; 
+	*/
 	@Override
 	public void update(Observable o, Object arg) {
 		Command comm = (Command) arg;

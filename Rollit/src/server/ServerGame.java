@@ -7,11 +7,11 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Random;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
-
-import clientAndServer.*;
-
+import clientAndServer.Ball;
 import clientAndServer.Board;
+import clientAndServer.Command;
+import clientAndServer.Commands;
+import clientAndServer.GlobalSettings;
 import exceptions.NotSameStateException;
 import exceptions.ProtocolNotFollowedException;
 
@@ -58,6 +58,10 @@ public class ServerGame extends Observable implements Observer {
      * Creates a new Game.
      * 
      * @param players the players
+     */
+    /*@
+      requires 2 <= players.size() && players.size() <= 4;
+      ensures this != null;
      */
     public ServerGame(ArrayList<GamePlayer> players) {
     	this.players = players;
@@ -127,7 +131,10 @@ public class ServerGame extends Observable implements Observer {
     	return null;
     }
     
-	@Override
+	/*@
+	  requires o instanceof ClientCommunicator;
+	 */
+    @Override
 	public void update(Observable o, Object arg) {
 		ClientCommunicator client = (ClientCommunicator) o;
 		GamePlayer player = getPlayer(client);
