@@ -388,11 +388,8 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 		if (game.ClientHasturn() && hasHuman) {
 			for(int y = 0; y < Board.Y_MAX; y++) {
 				for (int x = 0; x < Board.X_MAX; x++) {
-					if (game.ClientHasturn()) {
-						if (field[y][x].equals(pressedButton)) {
-							field[y][x].setEnabled(false);
-							game.move(new Point(x,y));		
-						}
+					if (field[y][x].equals(pressedButton)) {
+						((OnlineHumanPlayer) game.getClient()).setChoice(new Point(x, y));
 					}
 				}
 			}
@@ -509,36 +506,32 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 				setLocation(Tools.getCenterLocation(screenSize, getSize()));
 			} else {
 				oldSize = getSize();
-				setBounds(-10, -30, (int) screenSize.getWidth() + 20,
-						(int) screenSize.getHeight() + 50);
-
+				setExtendedState(JFrame.MAXIMIZED_BOTH);
 			}
 		} else if (e.getSource() instanceof FieldButton) {
 			JButton pressedButton = (JButton) e.getSource();
 			fieldUsed(pressedButton);
-			//game.move();
 		}
-
 	}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
+		messageTyped = false;
+		String s = chat.getText() + e.getKeyChar();
+		if (Tools.containsLetterOrNumber(s)) {
+			messageTyped = true;
+		} 		
+	}
+	@Override
+	public void keyPressed(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 			if (messageTyped) {
 				addChatMessage(game.getClient().getName(), chat.getText());
 				chat.setText("");
 				game.chat(chat.getText());
 			}
-		} else {
-			messageTyped = false;
-			String s = chat.getText() + e.getKeyChar();
-			if (Tools.containsLetterOrNumber(s)) {
-				messageTyped = true;
-			} 
-		}		
+		} 
 	}
-	@Override
-	public void keyPressed(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {}
 

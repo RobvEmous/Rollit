@@ -14,8 +14,7 @@ import clientAndServer.Board;
  */
 public class OfflineHumanPlayer extends HumanPlayer {
 	
-	public Point choice = null;
-	public OfflineGameUI gui;
+	private Point choice = null;
 	
 	/**
 	 * If <code>true</code> uses UI to communicate, else uses System.out.
@@ -33,7 +32,7 @@ public class OfflineHumanPlayer extends HumanPlayer {
         this.useUI = useUI;
         scanner = new Scanner(System.in);
     }
-    
+      
     /**
      * Creates a new human player object.
      * 
@@ -41,7 +40,15 @@ public class OfflineHumanPlayer extends HumanPlayer {
     public OfflineHumanPlayer(String name, Ball ball) {
         super(name, ball);
         scanner = new Scanner(System.in);
-    }
+    } 
+    
+    /**
+     * Sets the choice of this player to <code>choice</code>.
+     * @param choice the chosen choice 
+     */
+    public void setChoice(Point choice) {
+    	this.choice = choice;
+	}
     
     /**
      * Asks the user to input the field where to place the next mark. This is

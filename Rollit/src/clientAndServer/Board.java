@@ -4,11 +4,10 @@ import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Random;
 
-
 /**
- * Game board for the Rollit game.
+ * Game board for the Rolit game.
  * @author Rob van Emous
- * @version 0.9
+ * @version 1.0
  */
 public class Board {
 
@@ -55,8 +54,11 @@ public class Board {
     /**
      * Creates an empty board.
      */
+    /*@
+     ensures this != null && getRankMap() != null && getFields() != null;
+     */
     public Board() {
-            rand = new Random();
+        rand = new Random();
         fields = new Ball[X_MAX][Y_MAX];
         reset();
         rankMap = createRankMap();
@@ -68,6 +70,7 @@ public class Board {
     /*@
       requires newFields != null;
       ensures getFields() == newFields;
+      pure;
      */
     public Board(Ball[][] newFields) {
         fields = newFields;
@@ -475,6 +478,7 @@ public class Board {
      */
     /*@
       ensures \result == (getEmptyFields() == null);
+      pure;
      */
     public boolean gameOver() {
         return isFull();

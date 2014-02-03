@@ -354,7 +354,7 @@ public class OfflineGameUI extends JFrame implements ActionListener, PopupUI {
 			for (int x = 0; x < Board.X_MAX; x++) {
 				if (field[y][x].equals(pressedButton) && 
 						currentPlayer instanceof HumanPlayer) {
-						((OfflineHumanPlayer) currentPlayer).choice = new Point(x,y);
+						((OfflineHumanPlayer) currentPlayer).setChoice(new Point(x,y)); // <-- Mooi!
 				}
 			}
 		}
@@ -372,7 +372,8 @@ public class OfflineGameUI extends JFrame implements ActionListener, PopupUI {
 			}
 		}
 		GamePlayer currPlayer = game.getCurrentPlayer();
-		stateField.setText("\n" + currPlayer.getName() + "(" + currPlayer.getBall() + ") has the turn.");
+		stateField.setText(
+				"\n" + currPlayer.getName() + "(" + currPlayer.getBall() + ") has the turn.");
 		if (currPlayer instanceof HumanPlayer) {
 			activateBoard();
 			switch (currPlayer.getBall()) {
@@ -475,9 +476,7 @@ public class OfflineGameUI extends JFrame implements ActionListener, PopupUI {
 				setLocation(Tools.getCenterLocation(screenSize, getSize()));
 			} else {
 				oldSize = getSize();
-				setBounds(-10, -30, (int) screenSize.getWidth() + 20,
-						(int) screenSize.getHeight() + 50);
-
+				setExtendedState(JFrame.MAXIMIZED_BOTH); 
 			}
 		}
 

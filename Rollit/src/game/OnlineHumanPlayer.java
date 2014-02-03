@@ -21,7 +21,7 @@ import exceptions.ProtocolNotFollowedException;
  */
 public class OnlineHumanPlayer extends HumanPlayer {
 
-    public Point choice = null;
+    private Point choice = null;
     
     /**
      * Creates a new Player object.
@@ -32,6 +32,14 @@ public class OnlineHumanPlayer extends HumanPlayer {
     public OnlineHumanPlayer(String name, Ball ball) {
     	super (name, ball);
     }
+       
+    /**
+     * Sets the choice of this player to <code>choice</code>.
+     * @param choice the chosen choice 
+     */
+    public void setChoice(Point choice) {
+    	this.choice = choice;
+	}
 
     /**
      * Determines the field for the next move.
@@ -41,20 +49,24 @@ public class OnlineHumanPlayer extends HumanPlayer {
      */
     public Point determineMove(Board board) {
 		choice = null;
-		boolean valid = false;
-		while (choice == null || !valid) {
+		while (choice == null) {
 			try {
 				Thread.sleep(20);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
-			}
-			valid = board.isValidMove(getBall(), choice);
-    		if (choice != null && !valid) {
-    			OfflineGameUI.newPopup("Illegal move", "You can't turn that ball, " + 
-    					"please choose another one.", false);
-    			choice = null;
+			}	
+
+    		if (choice != null) {
+    			if (board.isValidMove(getBall(), choice)) {
+    				return choice;	
+    			} else {
+        			OfflineGameUI.newPopup("Illegal move", "You can't turn that ball, " + 
+        					"please choose another one.", false);
+        			choice = null;
+    			}
     		}
 		}
-		return choice;		
+		return null;
+
     }
 }

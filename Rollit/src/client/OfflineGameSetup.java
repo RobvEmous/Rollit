@@ -4,10 +4,8 @@ import clientAndServer.Ball;
 import game.ComputerPlayer;
 import game.OfflineGame;
 import game.GamePlayer;
-import game.HumanPlayer;
 import game.NaiveStrategy;
 import game.OfflineHumanPlayer;
-import game.OnlineHumanPlayer;
 import game.SmartStrategy;
 import game.SmarterStrategy;
 
@@ -37,7 +35,6 @@ public class OfflineGameSetup {
 			public void run() {
 				OfflineGame game = new OfflineGame(c, namesToPlayers(playerss));
 				game.start();
-				
 			}
 		});
 		newGame.start();
@@ -47,7 +44,6 @@ public class OfflineGameSetup {
 		ui.dispose();
 		main.returnFromAction();
 	}
-	
 	
 	public void returnFromAction() {
 		ui.setVisible(true);

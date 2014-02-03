@@ -26,6 +26,6 @@ public class GlobalData {
 	 * String array containing all possible players
 	 */
 	public static final String[] PLAYERS = {PLAYER_HUMAN, PLAYER_AI_NAIVE, PLAYER_AI_SMART, PLAYER_AI_SMARTER};
-
+	
 	
 }

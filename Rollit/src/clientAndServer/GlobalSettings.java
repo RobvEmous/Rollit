@@ -27,7 +27,7 @@ public final class GlobalSettings {
 	/**
 	 * The time the user has available to make a move in an online game.
 	 */
-	public static final int THINK_TIME = 60000; //ms
+	public static final int THINK_TIME = 6000000; //ms
 	
 	/**
 	 * The time an unauthenticated client gets to login before he gets 

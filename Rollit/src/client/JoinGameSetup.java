@@ -1,6 +1,7 @@
 package client;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -86,14 +87,26 @@ public class JoinGameSetup implements Observer {
 		String clientname = main.getClientName();
 		try {
 			String[] allPlayers = newGame.getArgs();
-			final String[] otherPlayers = Tools.removeOne(allPlayers, clientname);
-			if (allPlayers.length != nrOfPlayers || allPlayers.length - otherPlayers.length != 1) {
+			Ball[] allBalls = Ball.values();
+			GamePlayer playerTemp = null;
+			ArrayList<String> otherPlayersList = new ArrayList<String>();
+			for (int i = 0; i < allPlayers.length; i++) {
+				if (allPlayers[i].equals(clientname)) {
+					playerTemp = nameToPlayer(choice, allBalls[i]);
+				} else {
+					otherPlayersList.add(allPlayers[i]);
+				}
+			}
+			final GamePlayer player = playerTemp;
+			final String[] otherPlayers = 
+					(String[])otherPlayersList.toArray(
+							new String[otherPlayersList.size()]);
+			if (allPlayers.length != nrOfPlayers || player == null) {
 				throw new ProtocolNotFollowedException();
 			} 		
 			ui.dispose();
 			c.deleteObserver(this);
-			// from here the gameSetting is final and an online game will be started.
-			final GamePlayer player = nameToPlayer(choice);
+			// from here the gameSetting is final and an online game will be started.	
 			Thread newGame = new Thread(new Runnable() {	
 				@Override
 				public void run() {
@@ -119,8 +132,7 @@ public class JoinGameSetup implements Observer {
 		main.returnFromAction();
 	}
 	
-	private GamePlayer nameToPlayer(String name) {
-		Ball ball = Ball.RED;
+	private GamePlayer nameToPlayer(String name, Ball ball) {
 		GamePlayer player = null;
 		if (name.equals(GlobalData.PLAYERS[0])) {
 			player = new OnlineHumanPlayer(main.getClientName(), ball);

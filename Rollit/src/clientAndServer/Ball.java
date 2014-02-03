@@ -127,5 +127,23 @@ public enum Ball {
 	     }
 	     return color;
 	 }
+	 
+	 public static Ball getBall(int index) {
+		 Ball ball = null;
+	     if (index == 0) {
+	    	 ball = RED;
+	     } else if (index == 1) {
+	    	 ball = GREEN;
+	     } else if (index == 2) {
+	    	 ball = YELLOW;
+	     } else if (index == 3){
+	    	 ball = BLUE;
+	     } else if (index == 4){
+	    	 ball = HINT;
+	     } else {
+	    	 ball = EMPTY;
+	     }
+	     return ball;
+	 }
 
 }

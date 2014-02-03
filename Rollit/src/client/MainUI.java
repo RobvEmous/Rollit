@@ -178,7 +178,7 @@ public class MainUI extends JFrame implements ActionListener, PopupUI {
 		} else if (src.equals(bChallenge)) {
 			//main.challenge(); NOT IMPLEMENTED
 		} else if (src.equals(bHighscores)) {	
-			main.highScores();
+			//main.highScores(); NOT IMPLEMENTED
 		} else if (src.equals(bOfflineGame)) {
 			main.offlineGame();
 		} else if (src.equals(bExit)) {

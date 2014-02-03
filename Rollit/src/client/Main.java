@@ -54,6 +54,7 @@ public class Main implements Observer {
 
 	public void logout(boolean login) {
 		String subject = "Logout";
+		boolean exceptionThrown = false;
 		try {
 			if (isLoggedInOnline) {
 				c.logout();
@@ -65,15 +66,25 @@ public class Main implements Observer {
 		} catch (ProtocolNotFollowedException e) {
 			printPopupError(subject, e);
 			e.printStackTrace();
+			exceptionThrown = true;
+			if (login) {
+				login();
+			}
 		} catch (IOException e) {
 			printPopupError(subject, e);
+			exceptionThrown = true;
 			if (login) {
 				login();
 			}
 			e.printStackTrace();
 		} catch (NotSameStateException e) {
 			printPopupError(subject, e);
+			exceptionThrown = true;
 			e.printStackTrace();
+
+		}
+		if (exceptionThrown && login) {
+			login();
 		}
 
 	}
