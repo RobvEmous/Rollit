@@ -279,7 +279,7 @@ public class ServerGame extends Observable implements Observer {
 				if (!board.isValidMove(ball, performedMove)) {
 					throw new NotSameStateException();
 				}
-			} catch (NumberFormatException e2) {
+			} catch (NumberFormatException | NotSameStateException e2) {
 				try {
 					currentP.getClient().sendAck(Commands.COM_MOVE, Commands.ANS_GEN_BAD);
 				} catch (IOException e1) {
@@ -287,6 +287,7 @@ public class ServerGame extends Observable implements Observer {
 				}
 				removePlayer(currentP);
 				return;
+			}
 			try {
 				currentP.getClient().sendAck(Commands.COM_MOVE, Commands.ANS_GEN_GOOD);
 			} catch (IOException e) {

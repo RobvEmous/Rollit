@@ -96,7 +96,7 @@ public class ClientManager implements Observer {
 		playerRW.open();
 		//scoreRW = new ScoreRW();
 		//scoreRW.open();		
-		gameManager = new GameManager(main, this, null);
+		gameManager = new GameManager(main, this);
 		main.setGameManager(gameManager);
 		startInactiveGuestRemover();
 	}

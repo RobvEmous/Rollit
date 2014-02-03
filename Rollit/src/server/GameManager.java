@@ -49,7 +49,7 @@ public class GameManager implements Observer {
 	private boolean stop = false;
 	
 
-	public GameManager(Main main, ClientManager clientManager, ScoreRW scoreRW) {
+	public GameManager(Main main, ClientManager clientManager) {
 		this.main = main;
 		this.clientManager = clientManager;
 		//this.scoreRW = scoreRW;
