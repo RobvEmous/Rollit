@@ -13,14 +13,10 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Observable;
-import java.util.Observer;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -40,13 +36,9 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
+import client.PopupUI;
 import clientAndServer.Ball;
 import clientAndServer.Board;
-import clientAndServer.GlobalSettings;
-import game.FieldButton;
-
-import client.JoinGameSetupUI;
-import client.PopupUI;
 import clientAndServer.Tools;
 
 /**
