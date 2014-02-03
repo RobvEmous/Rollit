@@ -67,15 +67,9 @@ public class Main implements Observer {
 			printPopupError(subject, e);
 			e.printStackTrace();
 			exceptionThrown = true;
-			if (login) {
-				login();
-			}
 		} catch (IOException e) {
 			printPopupError(subject, e);
 			exceptionThrown = true;
-			if (login) {
-				login();
-			}
 			e.printStackTrace();
 		} catch (NotSameStateException e) {
 			printPopupError(subject, e);

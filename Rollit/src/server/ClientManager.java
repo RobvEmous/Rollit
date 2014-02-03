@@ -64,6 +64,8 @@ public class ClientManager implements Observer {
 	
 	private boolean stop = false;
 	
+	private ArrayList<String> clientHistory;
+	
 	private String guestAdded = "Guest added: ";
 	private String guestUpgraded = "Guest logged in: ";
 	private String guestKicked = "Guest kicked: ";
@@ -90,6 +92,7 @@ public class ClientManager implements Observer {
 		this.main = main;	
 		clients = new HashMap<ClientCommunicator, String>();
 		guests = new HashMap<ClientCommunicator, Long>();
+		clientHistory = new ArrayList<String>();
 		playerRW = new PlayerRW();
 		playerRW.open();	
 		gameManager = new GameManager(main, this);
@@ -161,6 +164,7 @@ public class ClientManager implements Observer {
 		synchronized (clients) {
 			clients.put(guest, guestName);
 		}
+		clientHistory.add(guestName);
 		sendMessage(guestUpgraded + clientInfo(guest));
 	}
 	
@@ -180,7 +184,8 @@ public class ClientManager implements Observer {
 		long startTime = System.currentTimeMillis();
 		sendMessage(clientDowngraded + clientInfo(client));
 		synchronized (clients) {
-			clients.remove(client);
+			clientHistory.remove(clients.get(client));
+			clients.remove(client);		
 		}		
 		synchronized (guests) {
 			guests.put(client, startTime);
@@ -218,12 +223,12 @@ public class ClientManager implements Observer {
 	 */
 	private void removeClient(ClientCommunicator client, boolean kick) {
 		client.deleteObserver(this);
-		client.shutdown(false);	
 		if (kick) {
 			sendMessage(clientKicked + clientInfo(client));
 		} else {
 			sendMessage(clientDisconnected + clientInfo(client));
-		}		
+		}	
+		client.shutdown(false);	
 		synchronized (clients) {
 			clients.remove(client);
 		}		
@@ -328,7 +333,10 @@ public class ClientManager implements Observer {
 					String password = "";
 					try {
 						name = comm.getArgs()[0];
-						password = comm.getArgs()[1];				
+						password = comm.getArgs()[1];	
+						if (clientHistory.contains(name)) {
+							throw new ProtocolNotFollowedException();
+						}
 					} catch (ArrayIndexOutOfBoundsException e) {
 						throw new ProtocolNotFollowedException();
 					}
@@ -343,9 +351,9 @@ public class ClientManager implements Observer {
 					} catch (IOException e1) {			
 						e1.printStackTrace();
 					}
-					removeClient(client, true);
+					removeGuest(client, true);
 				} catch (IOException e) {
-					removeGuest(client, false);
+					removeGuest(client, true);;
 					e.printStackTrace();
 				}
 			} else {
@@ -354,7 +362,7 @@ public class ClientManager implements Observer {
 				} catch (IOException e) {			
 					e.printStackTrace();
 				}
-				removeClient(client, true);
+				removeGuest(client, true);
 			}
 		} else if (clients.containsKey(client)) {
 			if (comm.getId().equals(Commands.COM_LOGOUT)) {

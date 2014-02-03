@@ -483,13 +483,20 @@ public class OnlineGameUI extends JFrame implements ActionListener, KeyListener,
 	}
 
 	@Override
-	public void addPopup(String title, String message, boolean warning) {
+	public void addPopup(final String title, final String message, final boolean warning) {
 		if (isVisible()) {
-			if (!warning) {
-				JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
-			} else {
-				JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
-			}
+			Thread addPopThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					if (!warning) {
+						JOptionPane.showMessageDialog(getParent(), message, title, JOptionPane.INFORMATION_MESSAGE);
+					} else {
+						JOptionPane.showMessageDialog(getParent(), message, title, JOptionPane.ERROR_MESSAGE);
+					}		
+				}
+			});
+			addPopThread.setDaemon(true);
+			addPopThread.start();
 		}
 	}
 

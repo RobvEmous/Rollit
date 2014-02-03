@@ -395,14 +395,8 @@ public class OnlineGame implements Observer {
 		try {
 			String playerName = comm.getArgs()[0];
 			serverPlayers.remove(getServerPlayer(playerName));
-			final String name = playerName;
-			Thread remove = new Thread(new Runnable() {	
-				@Override
-				public void run() {
-					gameUI.addPopup("Player rage-quited", main.getClientName() + ", player: " + name, true);
-				}
-			});
-			remove.start();
+			String name = playerName;
+			gameUI.addPopup("Player rage-quited", main.getClientName() + ", player: " + name, true);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			throw new ProtocolNotFollowedException();
 		}
@@ -432,13 +426,14 @@ public class OnlineGame implements Observer {
 			gameUI.addPopup("Your turn", main.getClientName() + " , it is your turn!\n" +
 					"Your have got: " + (GlobalSettings.THINK_TIME / 1000) + " seconds to pick a field.", true);
 		}
-		clientPlayer.determineMove(board);
+		move(clientPlayer.determineMove(board));
 		updateScreen();
 	}
 	
-   public void move(Point p) {
+   private void move(Point p) {
     	String title = "Move";
     	try {
+    		clientHasTurn = false;
     		board.setField(p, clientPlayer.getBall());
     		updateScreen();
 			sc.move(p.x, p.y);			

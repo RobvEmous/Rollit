@@ -1,7 +1,6 @@
 package server;
 
 import java.io.IOException;
-import java.security.AllPermission;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Observable;
@@ -13,13 +12,15 @@ import clientAndServer.Commands;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Tools;
 
-import exceptions.NotSameStateException;
 import exceptions.ProtocolNotFollowedException;
 
 /**
- * Class is thread-safe
+ * This class will manage all currently active games and will assign 
+ * players (who have joined) to the right game types when enough of them
+ * have joined: It needs 3 players who want to play a game with 3 players
+ * to create a game for 3 players. 
  * @author Rob van Emous
- * @version 0.2
+ * @version 1.0
  */
 public class GameManager implements Observer {
 	
@@ -39,7 +40,6 @@ public class GameManager implements Observer {
 	private String waiterDisconnected= "Client disconnected: ";
 	private String waiterDisjoined= "Client disjoined: ";
 	private String gameStarted = "Game started with: ";
-	//private String gameStopped = "Game stopped with: ";
 	private String playerStopped = "Player rage-quited: ";
 	private String playerKicked = "Player kicked: ";
 	private String playerDisconnected = "Player disconnected: ";
@@ -48,7 +48,12 @@ public class GameManager implements Observer {
 	
 	private boolean stop = false;
 	
-
+	/**
+	 * Starts the game manager
+	 * @param main the {@link Main} to forward messages to.
+	 * @param clientManager the {@link ClientManager} to return disjointed
+	 * or done-playing player to.
+	 */
 	public GameManager(Main main, ClientManager clientManager) {
 		this.main = main;
 		this.clientManager = clientManager;
@@ -152,6 +157,7 @@ public class GameManager implements Observer {
 	
 	public void addQuitter(GamePlayer player)  {
 		sendMessage(playerStopped + player.toString());
+		sendToClientManager(player.getClient(), player.getName());
 	}
 	
 	public void addKicked(GamePlayer player)  {
@@ -244,9 +250,11 @@ public class GameManager implements Observer {
 		main.addMessage(this, text);
 	}
 	
+	/**
+	 * Shuts down the game manager
+	 */
 	public void shutDown() {
 		stop = true;
-		//scoreRW.close();	
 		for (ClientCommunicator client : waitersName.keySet()) {
 			client.deleteObserver(this);
 			client.shutdown(false);

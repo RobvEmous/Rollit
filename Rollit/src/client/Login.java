@@ -18,11 +18,11 @@ public class Login extends Observable {
 	private String name;
 	
 	private String infoTitle = "Login";
-	private String infoLoginOffline = " , you have succesfully logged in offline!";
-	private String infoLoginSucces = " , you have succesfully logged in!";
-	private String infoAdressError = " , you did not type a valid ip-adress!";
-	private String infoPortError = " , you did not type a valid port!";
-	private String infoLoginError1 = " , you typed a wrong password!\n" +
+	private String infoLoginOffline = ", you have succesfully logged in offline!";
+	private String infoLoginSucces = ", you have succesfully logged in!";
+	private String infoAdressError = ", you did not type a valid ip-adress!";
+	private String infoPortError = ", you did not type a valid port!";
+	private String infoLoginError1 = ", you typed a wrong password!\n" +
 			"If you are trying to create a new account, the username has already been taken.";
 
 	public Login() {
@@ -78,7 +78,9 @@ public class Login extends Observable {
 			e.printStackTrace();
 			return false;
 		} catch (NotSameStateException e) {
-			loginGUI.addPopup(infoTitle, name + GlobalData.ERR_STATE, true);
+			loginGUI.addPopup(infoTitle, name + ", either you have been " +
+					"kicked from this Server, or someone has already " +
+					"logged in on this account.", true);
 			e.printStackTrace();
 			return false;
 		}
@@ -105,7 +107,7 @@ public class Login extends Observable {
 		try {
 			localhost = InetAddress.getLocalHost().getHostAddress();
 		} catch (UnknownHostException e1) {
-			loginGUI.addPopup(infoTitle, name + "this shoud never happen", true);
+			loginGUI.addPopup(infoTitle, name + "this should never happen", true);
 			e1.printStackTrace();
 		}
 		return localhost;

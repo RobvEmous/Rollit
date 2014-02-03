@@ -198,15 +198,13 @@ public class ServerGame extends Observable implements Observer {
 		ArrayList<GamePlayer> notRespondingToGameOver = new  ArrayList<GamePlayer>();
 		for (GamePlayer player : players) {
 			try {
+				player.getClient().deleteObserver(this);
 				player.getClient().gameOver();
 			} catch (ProtocolNotFollowedException | IOException e) {
 				notRespondingToGameOver.add(player);
 				e.printStackTrace();
 			}
 		}		
-		for (GamePlayer player : players) {
-			player.getClient().deleteObserver(this);
-		}
 		for (GamePlayer nonResponder : notRespondingToGameOver) {
 			players.remove(nonResponder);
 		}
