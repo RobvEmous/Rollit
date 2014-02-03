@@ -8,7 +8,6 @@ import java.util.Observer;
 
 import clientAndServer.Command;
 import clientAndServer.Commands;
-import clientAndServer.GlobalData;
 import clientAndServer.GlobalSettings;
 import clientAndServer.Password;
 import exceptions.ProtocolNotFollowedException;

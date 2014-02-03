@@ -105,7 +105,7 @@ public class PlayerRW {
 		if (hasPlayer(p)) {
 			for (Player player : players) {
 				if (player.getName().equals(p.getName())) {
-					return player.getPassword().equals(p);
+					return player.getPassword().equals(p.getPassword());
 				}
 			}
 		}
@@ -120,7 +120,7 @@ public class PlayerRW {
 	
 	public boolean hasPlayer(Player p) {
 		for (Player player : players) {
-			if (player.getName().equalsIgnoreCase(p.getName())) {
+			if (player.getName().equals(p.getName())) {
 				return true;
 			}
 		}
